@@ -37,6 +37,7 @@ interface PlayerContextType extends PlayerState {
   play: (station: RadioStation) => void;
   pause: () => void;
   resume: () => void;
+  stop: () => void;
   setVolume: (v: number) => void;
   toggleNowPlaying: () => void;
   favorites: RadioStation[];
@@ -239,6 +240,11 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const toggleNowPlaying = useCallback(() => { setState(s => ({ ...s, showNowPlaying: !s.showNowPlaying })); }, []);
 
+  const stop = useCallback(() => {
+    stopCurrentPlayer();
+    setState(s => ({ ...s, currentStation: null, isPlaying: false, isLoading: false, showNowPlaying: false, nowPlayingInfo: null }));
+  }, [stopCurrentPlayer]);
+
   const seekAudio = useCallback((seconds: number) => {
     const audio = usingFallbackRef.current
       ? fallbackAudioRef.current
@@ -270,7 +276,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   return (
     <PlayerContext.Provider value={{
-      ...state, play, pause, resume, setVolume, toggleNowPlaying,
+      ...state, play, pause, resume, stop, setVolume, toggleNowPlaying,
       favorites, toggleFavorite, isFavorite, settings, updateSettings, recentlyPlayed,
       skipBack, skipForward: skipForwardFn,
     }}>

@@ -5,66 +5,127 @@ import { cn } from "@/lib/utils";
 interface StationLogoProps {
   src?: string;
   name: string;
+  frequency?: string;
   size?: "xs" | "sm" | "md" | "lg" | "xl";
-  className?: string;
   playing?: boolean;
+  className?: string;
 }
 
-const sizes = {
-  xs: "h-8 w-8",
-  sm: "h-11 w-11",
-  md: "h-14 w-14",
+const sizeClasses = {
+  xs: "h-12 w-12",
+  sm: "h-14 w-14",
+  md: "h-16 w-16",
   lg: "h-24 w-24",
-  xl: "h-44 w-44",
+  xl: "h-full w-full",
 };
 
-const iconSizes = { xs: 12, sm: 16, md: 20, lg: 32, xl: 48 };
-const textSizes = { xs: "text-[8px]", sm: "text-[10px]", md: "text-xs", lg: "text-base", xl: "text-xl" };
+const textSizes = {
+  xs: "text-[10px]",
+  sm: "text-xs",
+  md: "text-sm",
+  lg: "text-lg",
+  xl: "text-3xl",
+};
 
-export const StationLogo = ({ src, name, size = "md", className, playing }: StationLogoProps) => {
-  const [imgError, setImgError] = useState(false);
-  const initials = name?.split(" ").slice(0, 2).map(w => w?.[0]).join("").toUpperCase() || "?";
+const frequencySizes = {
+  xs: "text-[8px]",
+  sm: "text-[10px]",
+  md: "text-xs",
+  lg: "text-sm",
+  xl: "text-lg",
+};
 
-  return (
-    <div className={cn(
-      "relative rounded-2xl overflow-hidden flex items-center justify-center shrink-0",
-      "bg-secondary",
-      sizes[size],
-      playing && "ring-2 ring-primary/40",
-      className,
-    )}>
-      {src && !imgError ? (
+export const StationLogo = ({ src, name, frequency, size = "md", playing, className }: StationLogoProps) => {
+  const [error, setError] = useState(false);
+
+  // Get initials from station name
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .filter(word => word.length > 0)
+      .slice(0, 2)
+      .map(word => word[0])
+      .join("")
+      .toUpperCase();
+  };
+
+  // Generate gradient based on name
+  const getGradient = (name: string) => {
+    const colors = [
+      "from-rose-500 to-orange-400",
+      "from-violet-500 to-purple-400",
+      "from-blue-500 to-cyan-400",
+      "from-emerald-500 to-teal-400",
+      "from-amber-500 to-yellow-400",
+      "from-pink-500 to-rose-400",
+      "from-indigo-500 to-blue-400",
+    ];
+    const index = name.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0) % colors.length;
+    return colors[index];
+  };
+
+  if (src && !error) {
+    return (
+      <div className={cn(sizeClasses[size], "relative overflow-hidden bg-muted rounded-2xl", className)}>
         <img
           src={src}
           alt={name}
           className="h-full w-full object-cover"
-          onError={() => setImgError(true)}
-          loading="lazy"
+          onError={() => setError(true)}
         />
-      ) : (
-        <div className="flex flex-col items-center justify-center gap-0.5">
-          <Radio size={iconSizes[size]} className="text-primary" />
-          {(size !== "xs" && size !== "sm") && (
-            <span className={cn("font-semibold text-muted-foreground", textSizes[size])}>{initials}</span>
-          )}
-        </div>
+        {playing && <PlayingIndicator size={size} />}
+      </div>
+    );
+  }
+
+  // Fallback: Show station name and frequency
+  return (
+    <div
+      className={cn(
+        sizeClasses[size],
+        "relative overflow-hidden flex flex-col items-center justify-center bg-gradient-to-br rounded-2xl",
+        getGradient(name),
+        className
       )}
-      {/* Playing indicator */}
-      {playing && (
-        <div className="absolute bottom-1 right-1 flex items-end gap-[2px] h-3">
-          {[0, 1, 2].map(i => (
-            <div
-              key={i}
-              className="w-[3px] bg-primary rounded-full"
-              style={{
-                animation: `eq-bar 0.${4 + i * 2}s ease-in-out infinite alternate`,
-                animationDelay: `${i * 0.15}s`,
-                height: "4px",
-              }}
-            />
-          ))}
-        </div>
+    >
+      <span className={cn("font-bold text-white text-center px-1 leading-tight", textSizes[size])}>
+        {size === "xl" ? name.slice(0, 20) : getInitials(name)}
+      </span>
+      {frequency && size !== "xs" && (
+        <span className={cn("text-white/80 font-medium mt-0.5", frequencySizes[size])}>
+          {frequency}
+        </span>
       )}
+      {!frequency && size === "xl" && (
+        <span className={cn("text-white/70 font-medium mt-1", frequencySizes[size])}>
+          Live Radio
+        </span>
+      )}
+      {playing && <PlayingIndicator size={size} />}
+    </div>
+  );
+};
+
+const PlayingIndicator = ({ size }: { size: string }) => {
+  const barSize = size === "xl" ? "h-6" : size === "lg" ? "h-4" : "h-2";
+  
+  return (
+    <div className="absolute bottom-1 right-1 flex items-end gap-0.5 p-1 rounded-md bg-black/30 backdrop-blur-sm">
+      {[1, 2, 3].map((i) => (
+        <div
+          key={i}
+          className={cn("w-0.5 bg-white rounded-full", barSize)}
+          style={{
+            animation: `equalizer 0.8s ease-in-out ${i * 0.1}s infinite alternate`,
+          }}
+        />
+      ))}
+      <style>{`
+        @keyframes equalizer {
+          0% { transform: scaleY(0.3); }
+          100% { transform: scaleY(1); }
+        }
+      `}</style>
     </div>
   );
 };

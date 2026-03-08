@@ -8,15 +8,19 @@ interface Settings {
   showNotifications: boolean;
   sleepTimer: number; // minutes, 0 = off
   locationEnabled: boolean;
+  skipBackward: number; // seconds: 5, 10, 30, 60
+  skipForward: number; // seconds: 5, 10, 30, 60
 }
 
 const DEFAULT_SETTINGS: Settings = {
-  theme: "dark",
+  theme: "light",
   streamQuality: "high",
   autoPlay: true,
   showNotifications: true,
   sleepTimer: 0,
   locationEnabled: true,
+  skipBackward: 10,
+  skipForward: 30,
 };
 
 interface PlayerState {
@@ -25,6 +29,7 @@ interface PlayerState {
   volume: number;
   isLoading: boolean;
   showNowPlaying: boolean;
+  nowPlayingInfo: string | null; // What's currently playing on the station
 }
 
 interface PlayerContextType extends PlayerState {
@@ -39,6 +44,8 @@ interface PlayerContextType extends PlayerState {
   settings: Settings;
   updateSettings: (partial: Partial<Settings>) => void;
   recentlyPlayed: RadioStation[];
+  skipBack: () => void;
+  skipForward: () => void;
 }
 
 const PlayerContext = createContext<PlayerContextType | null>(null);
@@ -59,6 +66,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     volume: 0.8,
     isLoading: false,
     showNowPlaying: false,
+    nowPlayingInfo: null,
   });
 
   const [favorites, setFavorites] = useState<RadioStation[]>(() => {
@@ -115,7 +123,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const audio = audioRef.current;
     audio.src = station.url_resolved || station.url;
     audio.volume = state.volume;
-    setState(s => ({ ...s, currentStation: station, isLoading: true, isPlaying: false }));
+    setState(s => ({ ...s, currentStation: station, isLoading: true, isPlaying: false, nowPlayingInfo: null }));
     addToRecent(station);
     audio.play().then(() => {
       setState(s => ({ ...s, isPlaying: true, isLoading: false }));
@@ -131,6 +139,19 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const resume = useCallback(() => { audioRef.current?.play(); setState(s => ({ ...s, isPlaying: true })); }, []);
   const setVolume = useCallback((v: number) => { if (audioRef.current) audioRef.current.volume = v; setState(s => ({ ...s, volume: v })); }, []);
   const toggleNowPlaying = useCallback(() => { setState(s => ({ ...s, showNowPlaying: !s.showNowPlaying })); }, []);
+
+  const skipBack = useCallback(() => {
+    // For live radio, we navigate to previous station instead
+    const currentIdx = recentlyPlayed.findIndex(s => s.stationuuid === state.currentStation?.stationuuid);
+    const prevStation = currentIdx < recentlyPlayed.length - 1 ? recentlyPlayed[currentIdx + 1] : null;
+    if (prevStation) play(prevStation);
+  }, [recentlyPlayed, state.currentStation, play]);
+
+  const skipForwardFn = useCallback(() => {
+    const currentIdx = recentlyPlayed.findIndex(s => s.stationuuid === state.currentStation?.stationuuid);
+    const nextStation = currentIdx > 0 ? recentlyPlayed[currentIdx - 1] : null;
+    if (nextStation) play(nextStation);
+  }, [recentlyPlayed, state.currentStation, play]);
 
   const toggleFavorite = useCallback((station: RadioStation) => {
     setFavorites(prev => prev.some(s => s.stationuuid === station.stationuuid)
@@ -148,6 +169,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     <PlayerContext.Provider value={{
       ...state, play, pause, resume, setVolume, toggleNowPlaying,
       favorites, toggleFavorite, isFavorite, settings, updateSettings, recentlyPlayed,
+      skipBack, skipForward: skipForwardFn,
     }}>
       {children}
     </PlayerContext.Provider>

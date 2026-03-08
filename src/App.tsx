@@ -10,6 +10,7 @@ import Search from "./pages/Search";
 import Countries from "./pages/Countries";
 import CountryStations from "./pages/CountryStations";
 import Favorites from "./pages/Favorites";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
               <Route path="/countries" element={<Countries />} />
               <Route path="/countries/:code" element={<CountryStations />} />
               <Route path="/favorites" element={<Favorites />} />
+              <Route path="/settings" element={<Settings />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

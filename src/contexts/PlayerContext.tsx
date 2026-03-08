@@ -1,6 +1,24 @@
 import React, { createContext, useContext, useState, useRef, useCallback, useEffect } from "react";
 import { RadioStation } from "@/types/radio";
 
+interface Settings {
+  theme: "light" | "dark" | "system";
+  streamQuality: "low" | "medium" | "high";
+  autoPlay: boolean;
+  showNotifications: boolean;
+  sleepTimer: number; // minutes, 0 = off
+  locationEnabled: boolean;
+}
+
+const DEFAULT_SETTINGS: Settings = {
+  theme: "dark",
+  streamQuality: "high",
+  autoPlay: true,
+  showNotifications: true,
+  sleepTimer: 0,
+  locationEnabled: true,
+};
+
 interface PlayerState {
   currentStation: RadioStation | null;
   isPlaying: boolean;
@@ -18,6 +36,9 @@ interface PlayerContextType extends PlayerState {
   favorites: RadioStation[];
   toggleFavorite: (station: RadioStation) => void;
   isFavorite: (stationuuid: string) => boolean;
+  settings: Settings;
+  updateSettings: (partial: Partial<Settings>) => void;
+  recentlyPlayed: RadioStation[];
 }
 
 const PlayerContext = createContext<PlayerContextType | null>(null);
@@ -30,6 +51,8 @@ export const usePlayer = () => {
 
 export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const sleepTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   const [state, setState] = useState<PlayerState>({
     currentStation: null,
     isPlaying: false,
@@ -39,68 +62,92 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   });
 
   const [favorites, setFavorites] = useState<RadioStation[]>(() => {
-    try {
-      return JSON.parse(localStorage.getItem("radio-favorites") || "[]");
-    } catch { return []; }
+    try { return JSON.parse(localStorage.getItem("radio-favorites") || "[]"); }
+    catch { return []; }
   });
 
+  const [recentlyPlayed, setRecentlyPlayed] = useState<RadioStation[]>(() => {
+    try { return JSON.parse(localStorage.getItem("radio-recent") || "[]"); }
+    catch { return []; }
+  });
+
+  const [settings, setSettings] = useState<Settings>(() => {
+    try { return { ...DEFAULT_SETTINGS, ...JSON.parse(localStorage.getItem("radio-settings") || "{}") }; }
+    catch { return DEFAULT_SETTINGS; }
+  });
+
+  useEffect(() => { localStorage.setItem("radio-favorites", JSON.stringify(favorites)); }, [favorites]);
+  useEffect(() => { localStorage.setItem("radio-recent", JSON.stringify(recentlyPlayed)); }, [recentlyPlayed]);
+  useEffect(() => { localStorage.setItem("radio-settings", JSON.stringify(settings)); }, [settings]);
+
+  // Theme management
   useEffect(() => {
-    localStorage.setItem("radio-favorites", JSON.stringify(favorites));
-  }, [favorites]);
+    const root = document.documentElement;
+    if (settings.theme === "system") {
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      root.classList.toggle("dark", prefersDark);
+    } else {
+      root.classList.toggle("dark", settings.theme === "dark");
+    }
+  }, [settings.theme]);
+
+  // Sleep timer
+  useEffect(() => {
+    if (sleepTimerRef.current) clearTimeout(sleepTimerRef.current);
+    if (settings.sleepTimer > 0 && state.isPlaying) {
+      sleepTimerRef.current = setTimeout(() => {
+        audioRef.current?.pause();
+        setState(s => ({ ...s, isPlaying: false }));
+      }, settings.sleepTimer * 60 * 1000);
+    }
+    return () => { if (sleepTimerRef.current) clearTimeout(sleepTimerRef.current); };
+  }, [settings.sleepTimer, state.isPlaying]);
+
+  const addToRecent = useCallback((station: RadioStation) => {
+    setRecentlyPlayed(prev => {
+      const filtered = prev.filter(s => s.stationuuid !== station.stationuuid);
+      return [station, ...filtered].slice(0, 20);
+    });
+  }, []);
 
   const play = useCallback((station: RadioStation) => {
-    if (!audioRef.current) {
-      audioRef.current = new Audio();
-    }
+    if (!audioRef.current) audioRef.current = new Audio();
     const audio = audioRef.current;
     audio.src = station.url_resolved || station.url;
     audio.volume = state.volume;
     setState(s => ({ ...s, currentStation: station, isLoading: true, isPlaying: false }));
+    addToRecent(station);
     audio.play().then(() => {
       setState(s => ({ ...s, isPlaying: true, isLoading: false }));
     }).catch(() => {
       setState(s => ({ ...s, isLoading: false, isPlaying: false }));
     });
-
     audio.onplaying = () => setState(s => ({ ...s, isPlaying: true, isLoading: false }));
     audio.onwaiting = () => setState(s => ({ ...s, isLoading: true }));
     audio.onerror = () => setState(s => ({ ...s, isPlaying: false, isLoading: false }));
-  }, [state.volume]);
+  }, [state.volume, addToRecent]);
 
-  const pause = useCallback(() => {
-    audioRef.current?.pause();
-    setState(s => ({ ...s, isPlaying: false }));
-  }, []);
-
-  const resume = useCallback(() => {
-    audioRef.current?.play();
-    setState(s => ({ ...s, isPlaying: true }));
-  }, []);
-
-  const setVolume = useCallback((v: number) => {
-    if (audioRef.current) audioRef.current.volume = v;
-    setState(s => ({ ...s, volume: v }));
-  }, []);
-
-  const toggleNowPlaying = useCallback(() => {
-    setState(s => ({ ...s, showNowPlaying: !s.showNowPlaying }));
-  }, []);
+  const pause = useCallback(() => { audioRef.current?.pause(); setState(s => ({ ...s, isPlaying: false })); }, []);
+  const resume = useCallback(() => { audioRef.current?.play(); setState(s => ({ ...s, isPlaying: true })); }, []);
+  const setVolume = useCallback((v: number) => { if (audioRef.current) audioRef.current.volume = v; setState(s => ({ ...s, volume: v })); }, []);
+  const toggleNowPlaying = useCallback(() => { setState(s => ({ ...s, showNowPlaying: !s.showNowPlaying })); }, []);
 
   const toggleFavorite = useCallback((station: RadioStation) => {
-    setFavorites(prev => {
-      const exists = prev.some(s => s.stationuuid === station.stationuuid);
-      return exists ? prev.filter(s => s.stationuuid !== station.stationuuid) : [...prev, station];
-    });
+    setFavorites(prev => prev.some(s => s.stationuuid === station.stationuuid)
+      ? prev.filter(s => s.stationuuid !== station.stationuuid)
+      : [...prev, station]);
   }, []);
 
-  const isFavorite = useCallback((stationuuid: string) => {
-    return favorites.some(s => s.stationuuid === stationuuid);
-  }, [favorites]);
+  const isFavorite = useCallback((stationuuid: string) => favorites.some(s => s.stationuuid === stationuuid), [favorites]);
+
+  const updateSettings = useCallback((partial: Partial<Settings>) => {
+    setSettings(prev => ({ ...prev, ...partial }));
+  }, []);
 
   return (
     <PlayerContext.Provider value={{
       ...state, play, pause, resume, setVolume, toggleNowPlaying,
-      favorites, toggleFavorite, isFavorite,
+      favorites, toggleFavorite, isFavorite, settings, updateSettings, recentlyPlayed,
     }}>
       {children}
     </PlayerContext.Provider>

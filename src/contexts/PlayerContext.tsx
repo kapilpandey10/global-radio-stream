@@ -239,17 +239,22 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const toggleNowPlaying = useCallback(() => { setState(s => ({ ...s, showNowPlaying: !s.showNowPlaying })); }, []);
 
+  const seekAudio = useCallback((seconds: number) => {
+    const audio = usingFallbackRef.current
+      ? fallbackAudioRef.current
+      : icecastPlayerRef.current?.audioElement;
+    if (audio && isFinite(audio.duration)) {
+      audio.currentTime = Math.max(0, Math.min(audio.duration, audio.currentTime + seconds));
+    }
+  }, []);
+
   const skipBack = useCallback(() => {
-    const currentIdx = recentlyPlayed.findIndex(s => s.stationuuid === state.currentStation?.stationuuid);
-    const prevStation = currentIdx < recentlyPlayed.length - 1 ? recentlyPlayed[currentIdx + 1] : null;
-    if (prevStation) play(prevStation);
-  }, [recentlyPlayed, state.currentStation, play]);
+    seekAudio(-settings.skipBackward);
+  }, [seekAudio, settings.skipBackward]);
 
   const skipForwardFn = useCallback(() => {
-    const currentIdx = recentlyPlayed.findIndex(s => s.stationuuid === state.currentStation?.stationuuid);
-    const nextStation = currentIdx > 0 ? recentlyPlayed[currentIdx - 1] : null;
-    if (nextStation) play(nextStation);
-  }, [recentlyPlayed, state.currentStation, play]);
+    seekAudio(settings.skipForward);
+  }, [seekAudio, settings.skipForward]);
 
   const toggleFavorite = useCallback((station: RadioStation) => {
     setFavorites(prev => prev.some(s => s.stationuuid === station.stationuuid)

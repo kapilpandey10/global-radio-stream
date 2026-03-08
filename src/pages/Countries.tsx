@@ -54,21 +54,21 @@ const Countries = () => {
       ...s,
       lat: s.geo_lat!,
       lng: s.geo_long!,
-      size: currentStation?.stationuuid === s.stationuuid && isPlaying ? 0.35 : 0.12,
+      size: currentStation?.stationuuid === s.stationuuid && isPlaying ? 0.18 : 0.04,
       color: currentStation?.stationuuid === s.stationuuid && isPlaying 
         ? "#ef4444" 
         : "#22c55e",
     }));
   }, [filtered, currentStation, isPlaying]);
 
-  // Auto-rotate
+  // Disable auto-rotate, enable mouse control
   useEffect(() => {
-    if (globeRef.current && !selectedStation) {
-      globeRef.current.controls().autoRotate = true;
-      globeRef.current.controls().autoRotateSpeed = 0.4;
+    if (globeRef.current) {
+      globeRef.current.controls().autoRotate = false;
       globeRef.current.controls().enableZoom = true;
+      globeRef.current.controls().enableRotate = true;
     }
-  }, [selectedStation]);
+  }, []);
 
   // Search results list
   const searchResults = useMemo(() => {
@@ -85,7 +85,6 @@ const Countries = () => {
     setSelectedLng(station.lng);
     
     if (globeRef.current) {
-      globeRef.current.controls().autoRotate = false;
       globeRef.current.pointOfView({ lat: station.lat, lng: station.lng, altitude: 0.8 }, 1200);
     }
   };
@@ -99,7 +98,6 @@ const Countries = () => {
     setSelectedLat(null);
     setSelectedLng(null);
     if (globeRef.current) {
-      globeRef.current.controls().autoRotate = true;
       globeRef.current.pointOfView({ altitude: 2.2 }, 800);
     }
   };

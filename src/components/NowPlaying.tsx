@@ -212,15 +212,27 @@ export const NowPlaying = () => {
             </div>
 
             {/* Transport Controls */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
+              {/* Prev station */}
               <button
                 onClick={() => prevStation && play(prevStation)}
                 disabled={!prevStation}
                 className="p-2 active:scale-90 transition-all disabled:opacity-20 rounded-full hover:bg-muted"
+                title="Previous station"
+              >
+                <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-foreground"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+              </button>
+
+              {/* Skip back */}
+              <button
+                onClick={skipBack}
+                className="p-2 active:scale-90 transition-all rounded-full hover:bg-muted"
+                title={`Skip back ${settings.skipBackward}s`}
               >
                 <SkipIcon seconds={settings.skipBackward} direction="back" />
               </button>
               
+              {/* Play/Pause */}
               <button
                 onClick={() => isPlaying ? pause() : resume()}
                 className="p-5 rounded-full bg-primary active:scale-90 transition-transform shadow-xl shadow-primary/25"
@@ -234,12 +246,23 @@ export const NowPlaying = () => {
                 )}
               </button>
               
+              {/* Skip forward */}
+              <button
+                onClick={skipForward}
+                className="p-2 active:scale-90 transition-all rounded-full hover:bg-muted"
+                title={`Skip forward ${settings.skipForward}s`}
+              >
+                <SkipIcon seconds={settings.skipForward} direction="forward" />
+              </button>
+
+              {/* Next station */}
               <button
                 onClick={() => nextStation && play(nextStation)}
                 disabled={!nextStation}
                 className="p-2 active:scale-90 transition-all disabled:opacity-20 rounded-full hover:bg-muted"
+                title="Next station"
               >
-                <SkipIcon seconds={settings.skipForward} direction="forward" />
+                <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-foreground"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
               </button>
             </div>
 

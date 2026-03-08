@@ -72,6 +72,53 @@ const Countries = () => {
     }
   }, []);
 
+  // Auto-detect user GPS location and zoom in
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        setUserLocation(loc);
+        setLocating(false);
+        if (globeRef.current) {
+          setTimeout(() => {
+            globeRef.current?.pointOfView({ lat: loc.lat, lng: loc.lng, altitude: 1.2 }, 2000);
+          }, 500);
+        }
+      },
+      () => setLocating(false),
+      { enableHighAccuracy: false, timeout: 8000 }
+    );
+  }, []);
+
+  const zoomIn = useCallback(() => {
+    if (!globeRef.current) return;
+    const pov = globeRef.current.pointOfView();
+    globeRef.current.pointOfView({ ...pov, altitude: Math.max(0.3, pov.altitude * 0.7) }, 400);
+  }, []);
+
+  const zoomOut = useCallback(() => {
+    if (!globeRef.current) return;
+    const pov = globeRef.current.pointOfView();
+    globeRef.current.pointOfView({ ...pov, altitude: Math.min(4, pov.altitude * 1.4) }, 400);
+  }, []);
+
+  const goToMyLocation = useCallback(() => {
+    if (!navigator.geolocation) return;
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        setUserLocation(loc);
+        setLocating(false);
+        globeRef.current?.pointOfView({ lat: loc.lat, lng: loc.lng, altitude: 1.0 }, 1200);
+      },
+      () => setLocating(false),
+      { enableHighAccuracy: true, timeout: 8000 }
+    );
+  }, []);
+
   // Search results list
   const searchResults = useMemo(() => {
     if (!search || !geoStations) return [];

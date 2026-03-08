@@ -160,6 +160,7 @@ const Countries = () => {
               </div>
             `}
             onPointClick={handleStationClick}
+            onGlobeClick={handleGlobeClick}
             width={globeSize.w}
             height={globeSize.h}
             atmosphereColor="#22c55e"

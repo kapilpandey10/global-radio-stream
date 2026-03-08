@@ -37,6 +37,7 @@ interface PlayerContextType extends PlayerState {
   play: (station: RadioStation) => void;
   pause: () => void;
   resume: () => void;
+  stop: () => void;
   setVolume: (v: number) => void;
   toggleNowPlaying: () => void;
   favorites: RadioStation[];

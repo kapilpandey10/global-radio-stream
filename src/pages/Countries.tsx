@@ -19,6 +19,8 @@ const Countries = () => {
   const [selectedLat, setSelectedLat] = useState<number | null>(null);
   const [selectedLng, setSelectedLng] = useState<number | null>(null);
   const [globeSize, setGlobeSize] = useState({ w: 400, h: 600 });
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [locating, setLocating] = useState(false);
   
   const { data: nearbyStations } = useNearbyStations(selectedLat, selectedLng, 8);
 

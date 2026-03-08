@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useRef, useCallback, useEffect } from "react";
 import { RadioStation } from "@/types/radio";
-import { IcecastMetadataPlayer } from "icecast-metadata-js";
+import IcecastMetadataPlayer from "icecast-metadata-player";
 
 interface Settings {
   theme: "light" | "dark" | "system";
@@ -183,9 +183,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           setState(s => ({ ...s, isLoading: true }));
         },
         metadataTypes: ["icy"],
-        retries: 1,
-        retryTimeout: 2000,
-      });
+      } as any);
 
       icecastPlayerRef.current = player;
       

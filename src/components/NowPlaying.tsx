@@ -44,16 +44,6 @@ export const NowPlaying = () => {
   const prevStation = currentIdx < recentlyPlayed.length - 1 ? recentlyPlayed[currentIdx + 1] : null;
   const nextStation = currentIdx > 0 ? recentlyPlayed[currentIdx - 1] : null;
 
-  const handleShare = async () => {
-    if (navigator.share) {
-      await navigator.share({
-        title: currentStation.name,
-        text: `Listen to ${currentStation.name} on World Radio`,
-        url: currentStation.homepage || window.location.href,
-      });
-    }
-  };
-
   return (
     <AnimatePresence>
       <motion.div
@@ -64,12 +54,12 @@ export const NowPlaying = () => {
         className="fixed inset-0 z-50 flex flex-col bg-background"
       >
         {/* Background gradient */}
-        <div className="absolute inset-0 bg-gradient-to-b from-card via-background to-background" />
+        <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-background to-background" />
         {isPlaying && (
           <motion.div 
-            animate={{ opacity: [0.3, 0.5, 0.3] }}
+            animate={{ opacity: [0.15, 0.3, 0.15] }}
             transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
-            className="absolute inset-0 bg-gradient-to-b from-primary/8 via-transparent to-transparent" 
+            className="absolute inset-0 bg-gradient-to-b from-primary/10 via-transparent to-transparent" 
           />
         )}
 
@@ -82,11 +72,11 @@ export const NowPlaying = () => {
             <span className="relative flex h-2 w-2">
               <span className={cn(
                 "absolute inline-flex h-full w-full rounded-full opacity-75",
-                isPlaying ? "animate-ping bg-red-500" : "bg-muted-foreground"
+                isPlaying ? "animate-ping bg-primary" : "bg-muted-foreground"
               )} />
               <span className={cn(
                 "relative inline-flex rounded-full h-2 w-2",
-                isPlaying ? "bg-red-500" : "bg-muted-foreground"
+                isPlaying ? "bg-primary" : "bg-muted-foreground"
               )} />
             </span>
             <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
@@ -103,12 +93,12 @@ export const NowPlaying = () => {
           <div className="flex flex-col items-center px-6 py-4 gap-4 min-h-full">
             {/* Artwork */}
             <motion.div
-              animate={isPlaying ? { scale: [1, 1.01, 1] } : { scale: 0.95, opacity: 0.8 }}
+              animate={isPlaying ? { scale: [1, 1.02, 1] } : { scale: 0.92, opacity: 0.7 }}
               transition={isPlaying ? { repeat: Infinity, duration: 4, ease: "easeInOut" } : { duration: 0.5 }}
-              className="relative w-[200px] h-[200px] sm:w-[240px] sm:h-[240px] shrink-0"
+              className="relative w-[220px] h-[220px] sm:w-[260px] sm:h-[260px] shrink-0"
             >
               {isPlaying && (
-                <div className="absolute -inset-3 bg-primary/15 rounded-[1.5rem] blur-2xl" />
+                <div className="absolute -inset-4 bg-primary/20 rounded-[2rem] blur-3xl" />
               )}
               <StationLogo
                 src={currentStation.favicon}
@@ -116,14 +106,14 @@ export const NowPlaying = () => {
                 frequency={currentStation.bitrate > 0 ? `${currentStation.bitrate} kHz` : "Live"}
                 size="xl"
                 playing={isPlaying}
-                className="w-full h-full rounded-[1.5rem] shadow-2xl relative z-10"
+                className="w-full h-full rounded-[2rem] shadow-2xl relative z-10"
               />
             </motion.div>
 
             {/* Currently Playing Track */}
-            <div className="w-full max-w-sm text-center space-y-1.5">
+            <div className="w-full max-w-sm text-center space-y-2">
               {nowPlayingInfo ? (
-                <div className="flex items-center justify-center gap-2 bg-primary/10 rounded-xl px-4 py-2">
+                <div className="flex items-center justify-center gap-2 bg-primary/10 rounded-2xl px-4 py-2.5 border border-primary/20">
                   <Music2 size={14} className="text-primary shrink-0" />
                   <motion.p
                     key={nowPlayingInfo}
@@ -146,10 +136,10 @@ export const NowPlaying = () => {
                       />
                     ))}
                   </div>
-                  <span className="text-xs font-semibold text-primary uppercase tracking-wider">Now Playing</span>
+                  <span className="text-xs font-bold text-primary uppercase tracking-wider">Now Playing</span>
                 </div>
               ) : (
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Paused</span>
+                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Paused</span>
               )}
 
               {/* Station Name */}
@@ -157,7 +147,7 @@ export const NowPlaying = () => {
                 onClick={() => setShowStationInfo(true)}
                 className="w-full active:opacity-70 transition-opacity group"
               >
-                <h2 className="text-xl font-bold text-foreground truncate group-hover:text-primary transition-colors">
+                <h2 className="text-2xl font-extrabold text-foreground truncate group-hover:text-primary transition-colors">
                   {currentStation.name}
                 </h2>
               </button>
@@ -172,7 +162,7 @@ export const NowPlaying = () => {
                     onError={(e) => (e.currentTarget.style.display = "none")}
                   />
                 )}
-                <span className="text-sm">{currentStation.country}</span>
+                <span className="text-sm font-medium">{currentStation.country}</span>
               </div>
 
               {/* Favorite */}
@@ -184,7 +174,7 @@ export const NowPlaying = () => {
                   "transition-all",
                   fav ? "fill-primary text-primary scale-110" : "text-muted-foreground"
                 )} />
-                <span className={cn("text-xs font-medium", fav ? "text-primary" : "text-muted-foreground")}>
+                <span className={cn("text-xs font-semibold", fav ? "text-primary" : "text-muted-foreground")}>
                   {fav ? "Saved" : "Save"}
                 </span>
               </button>
@@ -199,12 +189,12 @@ export const NowPlaying = () => {
                   className="h-full w-1/3 bg-gradient-to-r from-transparent via-primary to-transparent"
                 />
               </div>
-              <div className="flex justify-between mt-1 text-[10px] text-muted-foreground/70">
+              <div className="flex justify-between mt-1.5 text-[10px] text-muted-foreground/70 font-medium">
                 <span>Live Stream</span>
                 <span className="flex items-center gap-1">
                   <span className={cn(
                     "w-1.5 h-1.5 rounded-full",
-                    isPlaying ? "bg-red-500 animate-pulse" : "bg-muted-foreground"
+                    isPlaying ? "bg-primary animate-pulse" : "bg-muted-foreground"
                   )} />
                   {isPlaying ? "LIVE" : "OFFLINE"}
                 </span>
@@ -213,7 +203,6 @@ export const NowPlaying = () => {
 
             {/* Transport Controls */}
             <div className="flex items-center gap-4">
-              {/* Prev station */}
               <button
                 onClick={() => prevStation && play(prevStation)}
                 disabled={!prevStation}
@@ -223,7 +212,6 @@ export const NowPlaying = () => {
                 <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-foreground"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
               </button>
 
-              {/* Skip back */}
               <button
                 onClick={skipBack}
                 className="p-2 active:scale-90 transition-all rounded-full hover:bg-muted"
@@ -235,18 +223,17 @@ export const NowPlaying = () => {
               {/* Play/Pause */}
               <button
                 onClick={() => isPlaying ? pause() : resume()}
-                className="p-5 rounded-full bg-primary active:scale-90 transition-transform shadow-xl shadow-primary/25"
+                className="p-5 rounded-full gradient-primary active:scale-90 transition-transform shadow-xl shadow-primary/30"
               >
                 {isLoading ? (
-                  <Loader2 size={32} className="animate-spin text-primary-foreground" />
+                  <Loader2 size={32} className="animate-spin text-white" />
                 ) : isPlaying ? (
-                  <Pause size={32} className="text-primary-foreground" fill="currentColor" />
+                  <Pause size={32} className="text-white" fill="currentColor" />
                 ) : (
-                  <Play size={32} className="text-primary-foreground ml-1" fill="currentColor" />
+                  <Play size={32} className="text-white ml-1" fill="currentColor" />
                 )}
               </button>
               
-              {/* Skip forward */}
               <button
                 onClick={skipForward}
                 className="p-2 active:scale-90 transition-all rounded-full hover:bg-muted"
@@ -255,7 +242,6 @@ export const NowPlaying = () => {
                 <SkipIcon seconds={settings.skipForward} direction="forward" />
               </button>
 
-              {/* Next station */}
               <button
                 onClick={() => nextStation && play(nextStation)}
                 disabled={!nextStation}
@@ -269,7 +255,6 @@ export const NowPlaying = () => {
             {/* Volume */}
             <VolumeSlider value={volume} onChange={setVolume} />
 
-            {/* Bottom padding for safe area */}
             <div className="h-6 shrink-0" />
           </div>
         </div>

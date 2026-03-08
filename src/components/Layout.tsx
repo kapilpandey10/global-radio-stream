@@ -4,6 +4,7 @@ import { MiniPlayer } from "./MiniPlayer";
 import { NowPlaying } from "./NowPlaying";
 import { cn } from "@/lib/utils";
 import { usePlayer } from "@/contexts/PlayerContext";
+import { motion } from "framer-motion";
 
 const navItems = [
   { path: "/", icon: Home, label: "Listen" },
@@ -27,7 +28,7 @@ export const Layout = () => {
       <MiniPlayer />
       <NowPlaying />
 
-      {/* Apple-style tab bar */}
+      {/* Tab bar */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-xl border-t border-border/50">
         <div className="flex items-center justify-around max-w-lg mx-auto py-2 pb-safe">
           {navItems.map(({ path, icon: Icon, label }) => {
@@ -37,12 +38,19 @@ export const Layout = () => {
                 key={path}
                 onClick={() => navigate(path)}
                 className={cn(
-                  "flex flex-col items-center gap-1 py-1 px-4 transition-all min-w-[60px]",
+                  "relative flex flex-col items-center gap-1 py-1 px-4 transition-all min-w-[60px]",
                   active ? "text-primary" : "text-muted-foreground hover:text-foreground"
                 )}
               >
+                {active && (
+                  <motion.div
+                    layoutId="tab-indicator"
+                    className="absolute -top-2 w-8 h-1 rounded-full gradient-primary"
+                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                  />
+                )}
                 <Icon size={24} strokeWidth={active ? 2.2 : 1.6} />
-                <span className="text-[10px] font-medium">{label}</span>
+                <span className={cn("text-[10px]", active ? "font-bold" : "font-medium")}>{label}</span>
               </button>
             );
           })}

@@ -6,10 +6,10 @@ interface Settings {
   streamQuality: "low" | "medium" | "high";
   autoPlay: boolean;
   showNotifications: boolean;
-  sleepTimer: number; // minutes, 0 = off
+  sleepTimer: number;
   locationEnabled: boolean;
-  skipBackward: number; // seconds: 5, 10, 30, 60
-  skipForward: number; // seconds: 5, 10, 30, 60
+  skipBackward: number;
+  skipForward: number;
 }
 
 const DEFAULT_SETTINGS: Settings = {
@@ -29,7 +29,7 @@ interface PlayerState {
   volume: number;
   isLoading: boolean;
   showNowPlaying: boolean;
-  nowPlayingInfo: string | null; // What's currently playing on the station
+  nowPlayingInfo: string | null;
 }
 
 interface PlayerContextType extends PlayerState {
@@ -56,9 +56,34 @@ export const usePlayer = () => {
   return ctx;
 };
 
+// Try to fetch ICY metadata from a proxy
+const fetchNowPlaying = async (stationUrl: string): Promise<string | null> => {
+  try {
+    // Use a CORS proxy to get ICY metadata
+    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(stationUrl)}`;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 3000);
+    
+    const res = await fetch(proxyUrl, {
+      signal: controller.signal,
+      headers: { 'Icy-MetaData': '1' },
+    });
+    clearTimeout(timeout);
+    
+    // Check for icy-name or other headers
+    const icyName = res.headers.get('icy-name');
+    if (icyName) return icyName;
+    
+    return null;
+  } catch {
+    return null;
+  }
+};
+
 export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const sleepTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const metadataIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const [state, setState] = useState<PlayerState>({
     currentStation: null,
@@ -111,6 +136,29 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return () => { if (sleepTimerRef.current) clearTimeout(sleepTimerRef.current); };
   }, [settings.sleepTimer, state.isPlaying]);
 
+  // Poll for now playing metadata
+  useEffect(() => {
+    if (metadataIntervalRef.current) clearInterval(metadataIntervalRef.current);
+    
+    if (state.currentStation && state.isPlaying) {
+      const pollMetadata = async () => {
+        const url = state.currentStation?.url_resolved || state.currentStation?.url;
+        if (url) {
+          const info = await fetchNowPlaying(url);
+          if (info) {
+            setState(s => ({ ...s, nowPlayingInfo: info }));
+          }
+        }
+      };
+      
+      // Poll every 30 seconds
+      pollMetadata();
+      metadataIntervalRef.current = setInterval(pollMetadata, 30000);
+    }
+    
+    return () => { if (metadataIntervalRef.current) clearInterval(metadataIntervalRef.current); };
+  }, [state.currentStation?.stationuuid, state.isPlaying]);
+
   const addToRecent = useCallback((station: RadioStation) => {
     setRecentlyPlayed(prev => {
       const filtered = prev.filter(s => s.stationuuid !== station.stationuuid);
@@ -141,7 +189,6 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const toggleNowPlaying = useCallback(() => { setState(s => ({ ...s, showNowPlaying: !s.showNowPlaying })); }, []);
 
   const skipBack = useCallback(() => {
-    // For live radio, we navigate to previous station instead
     const currentIdx = recentlyPlayed.findIndex(s => s.stationuuid === state.currentStation?.stationuuid);
     const prevStation = currentIdx < recentlyPlayed.length - 1 ? recentlyPlayed[currentIdx + 1] : null;
     if (prevStation) play(prevStation);

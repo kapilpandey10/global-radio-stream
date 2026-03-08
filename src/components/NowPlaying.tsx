@@ -30,7 +30,7 @@ const SkipIcon = ({ seconds, direction }: { seconds: number; direction: "back" |
 
 export const NowPlaying = () => {
   const {
-    currentStation, isPlaying, isLoading, pause, resume, volume, setVolume,
+    currentStation, isPlaying, isLoading, pause, resume, stop, volume, setVolume,
     showNowPlaying, toggleNowPlaying, toggleFavorite, isFavorite, recentlyPlayed, play, settings, nowPlayingInfo,
     skipBack, skipForward,
   } = usePlayer();

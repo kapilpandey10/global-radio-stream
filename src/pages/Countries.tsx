@@ -9,7 +9,7 @@ import { RadioStation } from "@/types/radio";
 import { StationLogo } from "@/components/StationLogo";
 
 const Countries = () => {
-  const { data: geoStations, isLoading } = useGeoStations(500);
+  const { data: geoStations, isLoading } = useGeoStations();
   const [search, setSearch] = useState("");
   const globeRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);

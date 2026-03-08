@@ -80,15 +80,29 @@ export const useUserCountry = () =>
     retry: 1,
   });
 
-// Fetch stations with geo coordinates for the globe
-export const useGeoStations = (limit = 500) =>
+// Fetch ALL stations with geo coordinates for the globe (paginated)
+export const useGeoStations = () =>
   useQuery<RadioStation[]>({
-    queryKey: ["geo-stations", limit],
+    queryKey: ["geo-stations-all"],
     queryFn: async () => {
-      const data = await fetchJSON<RadioStation[]>(`/stations/search?has_geo_info=true&order=clickcount&reverse=true&limit=${limit}`);
-      return data.filter(s => s.geo_lat && s.geo_long);
+      const pages: RadioStation[][] = [];
+      let offset = 0;
+      const pageSize = 5000;
+      // Fetch in pages until we get fewer results than page size
+      while (true) {
+        const data = await fetchJSON<RadioStation[]>(
+          `/stations/search?has_geo_info=true&order=clickcount&reverse=true&limit=${pageSize}&offset=${offset}`
+        );
+        const valid = data.filter(s => s.geo_lat && s.geo_long);
+        pages.push(valid);
+        if (data.length < pageSize) break;
+        offset += pageSize;
+        // Safety cap at 50k stations
+        if (offset >= 50000) break;
+      }
+      return pages.flat();
     },
-    staleTime: 10 * 60 * 1000,
+    staleTime: 30 * 60 * 1000,
   });
 
 // Find nearby stations based on coordinates

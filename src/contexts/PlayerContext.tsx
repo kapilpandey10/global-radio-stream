@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useRef, useCallback, useEffect } from "react";
 import { RadioStation } from "@/types/radio";
+import { IcecastMetadataPlayer } from "icecast-metadata-js";
 
 interface Settings {
   theme: "light" | "dark" | "system";
@@ -56,34 +57,11 @@ export const usePlayer = () => {
   return ctx;
 };
 
-// Try to fetch ICY metadata from a proxy
-const fetchNowPlaying = async (stationUrl: string): Promise<string | null> => {
-  try {
-    // Use a CORS proxy to get ICY metadata
-    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(stationUrl)}`;
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 3000);
-    
-    const res = await fetch(proxyUrl, {
-      signal: controller.signal,
-      headers: { 'Icy-MetaData': '1' },
-    });
-    clearTimeout(timeout);
-    
-    // Check for icy-name or other headers
-    const icyName = res.headers.get('icy-name');
-    if (icyName) return icyName;
-    
-    return null;
-  } catch {
-    return null;
-  }
-};
-
 export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const icecastPlayerRef = useRef<IcecastMetadataPlayer | null>(null);
+  const fallbackAudioRef = useRef<HTMLAudioElement | null>(null);
   const sleepTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const metadataIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const usingFallbackRef = useRef(false);
 
   const [state, setState] = useState<PlayerState>({
     currentStation: null,
@@ -129,35 +107,24 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     if (sleepTimerRef.current) clearTimeout(sleepTimerRef.current);
     if (settings.sleepTimer > 0 && state.isPlaying) {
       sleepTimerRef.current = setTimeout(() => {
-        audioRef.current?.pause();
+        stopCurrentPlayer();
         setState(s => ({ ...s, isPlaying: false }));
       }, settings.sleepTimer * 60 * 1000);
     }
     return () => { if (sleepTimerRef.current) clearTimeout(sleepTimerRef.current); };
   }, [settings.sleepTimer, state.isPlaying]);
 
-  // Poll for now playing metadata
-  useEffect(() => {
-    if (metadataIntervalRef.current) clearInterval(metadataIntervalRef.current);
-    
-    if (state.currentStation && state.isPlaying) {
-      const pollMetadata = async () => {
-        const url = state.currentStation?.url_resolved || state.currentStation?.url;
-        if (url) {
-          const info = await fetchNowPlaying(url);
-          if (info) {
-            setState(s => ({ ...s, nowPlayingInfo: info }));
-          }
-        }
-      };
-      
-      // Poll every 30 seconds
-      pollMetadata();
-      metadataIntervalRef.current = setInterval(pollMetadata, 30000);
+  const stopCurrentPlayer = useCallback(() => {
+    if (icecastPlayerRef.current) {
+      try { icecastPlayerRef.current.stop(); } catch {}
+      icecastPlayerRef.current = null;
     }
-    
-    return () => { if (metadataIntervalRef.current) clearInterval(metadataIntervalRef.current); };
-  }, [state.currentStation?.stationuuid, state.isPlaying]);
+    if (fallbackAudioRef.current) {
+      fallbackAudioRef.current.pause();
+      fallbackAudioRef.current.src = "";
+    }
+    usingFallbackRef.current = false;
+  }, []);
 
   const addToRecent = useCallback((station: RadioStation) => {
     setRecentlyPlayed(prev => {
@@ -166,13 +133,12 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     });
   }, []);
 
-  const play = useCallback((station: RadioStation) => {
-    if (!audioRef.current) audioRef.current = new Audio();
-    const audio = audioRef.current;
+  const playWithFallback = useCallback((station: RadioStation, vol: number) => {
+    usingFallbackRef.current = true;
+    if (!fallbackAudioRef.current) fallbackAudioRef.current = new Audio();
+    const audio = fallbackAudioRef.current;
     audio.src = station.url_resolved || station.url;
-    audio.volume = state.volume;
-    setState(s => ({ ...s, currentStation: station, isLoading: true, isPlaying: false, nowPlayingInfo: null }));
-    addToRecent(station);
+    audio.volume = vol;
     audio.play().then(() => {
       setState(s => ({ ...s, isPlaying: true, isLoading: false }));
     }).catch(() => {
@@ -181,11 +147,98 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     audio.onplaying = () => setState(s => ({ ...s, isPlaying: true, isLoading: false }));
     audio.onwaiting = () => setState(s => ({ ...s, isLoading: true }));
     audio.onerror = () => setState(s => ({ ...s, isPlaying: false, isLoading: false }));
-  }, [state.volume, addToRecent]);
+  }, []);
 
-  const pause = useCallback(() => { audioRef.current?.pause(); setState(s => ({ ...s, isPlaying: false })); }, []);
-  const resume = useCallback(() => { audioRef.current?.play(); setState(s => ({ ...s, isPlaying: true })); }, []);
-  const setVolume = useCallback((v: number) => { if (audioRef.current) audioRef.current.volume = v; setState(s => ({ ...s, volume: v })); }, []);
+  const play = useCallback((station: RadioStation) => {
+    stopCurrentPlayer();
+    const streamUrl = station.url_resolved || station.url;
+    setState(s => ({ ...s, currentStation: station, isLoading: true, isPlaying: false, nowPlayingInfo: null }));
+    addToRecent(station);
+
+    try {
+      const player = new IcecastMetadataPlayer(streamUrl, {
+        onMetadata: (metadata: any) => {
+          const title = metadata?.StreamTitle || metadata?.ARTIST 
+            ? `${metadata?.ARTIST || ""}${metadata?.ARTIST && metadata?.TITLE ? " - " : ""}${metadata?.TITLE || ""}`
+            : metadata?.StreamTitle || null;
+          if (title && title.trim()) {
+            setState(s => ({ ...s, nowPlayingInfo: title.trim() }));
+          }
+        },
+        onPlay: () => {
+          setState(s => ({ ...s, isPlaying: true, isLoading: false }));
+        },
+        onLoad: () => {
+          setState(s => ({ ...s, isLoading: true }));
+        },
+        onStop: () => {
+          setState(s => ({ ...s, isPlaying: false }));
+        },
+        onError: (error: any) => {
+          console.warn("IcecastMetadataPlayer error, falling back to HTML Audio:", error);
+          // Fall back to regular HTML Audio
+          playWithFallback(station, state.volume);
+        },
+        onRetry: () => {
+          setState(s => ({ ...s, isLoading: true }));
+        },
+        metadataTypes: ["icy"],
+        retries: 1,
+        retryTimeout: 2000,
+      });
+
+      icecastPlayerRef.current = player;
+      
+      // Set volume via audioElement when available
+      const checkAudio = () => {
+        if (player.audioElement) {
+          player.audioElement.volume = state.volume;
+        }
+      };
+      
+      player.play().then(() => {
+        checkAudio();
+      }).catch(() => {
+        console.warn("IcecastMetadataPlayer play failed, using fallback");
+        playWithFallback(station, state.volume);
+      });
+    } catch (e) {
+      console.warn("IcecastMetadataPlayer init failed, using fallback:", e);
+      playWithFallback(station, state.volume);
+    }
+  }, [state.volume, addToRecent, stopCurrentPlayer, playWithFallback]);
+
+  const pause = useCallback(() => {
+    if (usingFallbackRef.current) {
+      fallbackAudioRef.current?.pause();
+    } else if (icecastPlayerRef.current) {
+      try { icecastPlayerRef.current.stop(); } catch {}
+    }
+    setState(s => ({ ...s, isPlaying: false }));
+  }, []);
+
+  const resume = useCallback(() => {
+    if (usingFallbackRef.current) {
+      fallbackAudioRef.current?.play();
+      setState(s => ({ ...s, isPlaying: true }));
+    } else {
+      // For icecast player, we need to re-play since stop() kills the connection
+      const station = state.currentStation;
+      if (station) {
+        play(station);
+      }
+    }
+  }, [state.currentStation, play]);
+
+  const setVolume = useCallback((v: number) => {
+    if (usingFallbackRef.current && fallbackAudioRef.current) {
+      fallbackAudioRef.current.volume = v;
+    } else if (icecastPlayerRef.current?.audioElement) {
+      icecastPlayerRef.current.audioElement.volume = v;
+    }
+    setState(s => ({ ...s, volume: v }));
+  }, []);
+
   const toggleNowPlaying = useCallback(() => { setState(s => ({ ...s, showNowPlaying: !s.showNowPlaying })); }, []);
 
   const skipBack = useCallback(() => {

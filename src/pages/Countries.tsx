@@ -61,14 +61,14 @@ const Countries = () => {
     }));
   }, [filtered, currentStation, isPlaying]);
 
-  // Auto-rotate
+  // Disable auto-rotate, enable mouse control
   useEffect(() => {
-    if (globeRef.current && !selectedStation) {
-      globeRef.current.controls().autoRotate = true;
-      globeRef.current.controls().autoRotateSpeed = 0.4;
+    if (globeRef.current) {
+      globeRef.current.controls().autoRotate = false;
       globeRef.current.controls().enableZoom = true;
+      globeRef.current.controls().enableRotate = true;
     }
-  }, [selectedStation]);
+  }, []);
 
   // Search results list
   const searchResults = useMemo(() => {

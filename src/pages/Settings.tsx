@@ -268,10 +268,24 @@ const Settings = () => {
               <Info size={14} /> Powered by Radio Browser API
             </p>
           </div>
-          <div className="py-4">
+          <div className="py-4 border-b border-border/40">
             <p className="text-sm text-muted-foreground leading-relaxed">
               Stream 30,000+ radio stations from around the world. 
               Free and open source. Made with ❤️
+            </p>
+          </div>
+          <div className="py-4">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Contact</p>
+            <a 
+              href="mailto:social@pandeykapil.com.np" 
+              className="text-sm text-primary font-medium hover:underline"
+            >
+              social@pandeykapil.com.np
+            </a>
+            <p className="text-xs text-muted-foreground mt-1">
+              <a href="https://radio.pandeykapil.com.np" className="hover:underline" target="_blank" rel="noopener noreferrer">
+                radio.pandeykapil.com.np
+              </a>
             </p>
           </div>
         </div>

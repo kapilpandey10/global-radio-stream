@@ -49,14 +49,14 @@ const Settings = () => {
   return (
     <div className="max-w-2xl mx-auto">
       <div className="px-5 pt-14 pb-4">
-        <h1 className="text-3xl font-bold text-foreground tracking-tight">Settings</h1>
-        <p className="text-muted-foreground mt-1">Customize your radio experience</p>
+        <h1 className="text-3xl font-extrabold text-foreground tracking-tight">Settings</h1>
+        <p className="text-muted-foreground mt-1 text-sm">Customize your radio experience</p>
       </div>
 
       {/* Appearance */}
       <Section title="Appearance" icon={<Palette size={16} />}>
         <div className="px-5 py-4">
-          <p className="text-sm text-muted-foreground mb-3">Theme</p>
+          <p className="text-sm text-muted-foreground mb-3 font-medium">Theme</p>
           <div className="flex gap-3">
             {themeOptions.map(({ value, label, icon: Icon }) => (
               <button
@@ -70,7 +70,7 @@ const Settings = () => {
                 )}
               >
                 <Icon size={24} />
-                <span className="text-sm font-medium">{label}</span>
+                <span className="text-sm font-semibold">{label}</span>
               </button>
             ))}
           </div>
@@ -81,7 +81,7 @@ const Settings = () => {
       <Section title="Playback" icon={<Volume2 size={16} />}>
         <div className="px-5">
           <div className="py-4 border-b border-border/40">
-            <p className="text-sm text-muted-foreground mb-3 flex items-center gap-2">
+            <p className="text-sm text-muted-foreground mb-3 flex items-center gap-2 font-medium">
               <Wifi size={14} /> Stream Quality
             </p>
             <div className="flex gap-2">
@@ -120,7 +120,7 @@ const Settings = () => {
       <Section title="Skip Controls" icon={<SkipForward size={16} />}>
         <div className="px-5 py-4 space-y-5">
           <div>
-            <p className="text-sm text-muted-foreground mb-3 flex items-center gap-2">
+            <p className="text-sm text-muted-foreground mb-3 flex items-center gap-2 font-medium">
               <SkipBack size={14} /> Skip Backward
             </p>
             <div className="flex gap-2">
@@ -129,7 +129,7 @@ const Settings = () => {
                   key={value}
                   onClick={() => updateSettings({ skipBackward: value })}
                   className={cn(
-                    "flex-1 py-2.5 rounded-xl border-2 text-sm font-medium transition-all",
+                    "flex-1 py-2.5 rounded-xl border-2 text-sm font-semibold transition-all",
                     settings.skipBackward === value
                       ? "border-primary bg-primary/10 text-primary"
                       : "border-border text-muted-foreground hover:border-primary/50"
@@ -141,7 +141,7 @@ const Settings = () => {
             </div>
           </div>
           <div>
-            <p className="text-sm text-muted-foreground mb-3 flex items-center gap-2">
+            <p className="text-sm text-muted-foreground mb-3 flex items-center gap-2 font-medium">
               <SkipForward size={14} /> Skip Forward
             </p>
             <div className="flex gap-2">
@@ -150,7 +150,7 @@ const Settings = () => {
                   key={value}
                   onClick={() => updateSettings({ skipForward: value })}
                   className={cn(
-                    "flex-1 py-2.5 rounded-xl border-2 text-sm font-medium transition-all",
+                    "flex-1 py-2.5 rounded-xl border-2 text-sm font-semibold transition-all",
                     settings.skipForward === value
                       ? "border-primary bg-primary/10 text-primary"
                       : "border-border text-muted-foreground hover:border-primary/50"
@@ -171,16 +171,16 @@ const Settings = () => {
       {/* Sleep Timer */}
       <Section title="Sleep Timer" icon={<Timer size={16} />}>
         <div className="px-5 py-4">
-          <p className="text-sm text-muted-foreground mb-3">Auto-stop after</p>
+          <p className="text-sm text-muted-foreground mb-3 font-medium">Auto-stop after</p>
           <div className="flex gap-2 flex-wrap">
             {sleepOptions.map(({ value, label }) => (
               <button
                 key={value}
                 onClick={() => updateSettings({ sleepTimer: value })}
                 className={cn(
-                  "px-5 py-2.5 rounded-full border-2 text-sm font-medium transition-all",
+                  "px-5 py-2.5 rounded-full border-2 text-sm font-semibold transition-all",
                   settings.sleepTimer === value
-                    ? "border-primary bg-primary text-primary-foreground"
+                    ? "border-primary gradient-primary text-white"
                     : "border-border text-muted-foreground hover:border-primary/50"
                 )}
               >
@@ -232,7 +232,7 @@ const Settings = () => {
           >
             <Trash2 size={18} className="text-muted-foreground" />
             <div className="flex-1 text-left">
-              <p className="text-[15px] text-foreground font-medium">Clear listening history</p>
+              <p className="text-[15px] text-foreground font-semibold">Clear listening history</p>
               <p className="text-xs text-muted-foreground">{recentlyPlayed.length} stations</p>
             </div>
             <ChevronRight size={16} className="text-muted-foreground/40" />
@@ -243,7 +243,7 @@ const Settings = () => {
           >
             <Trash2 size={18} className="text-destructive" />
             <div className="flex-1 text-left">
-              <p className="text-[15px] text-destructive font-medium">Clear all favorites</p>
+              <p className="text-[15px] text-destructive font-semibold">Clear all favorites</p>
               <p className="text-xs text-muted-foreground">{favorites.length} stations</p>
             </div>
             <ChevronRight size={16} className="text-muted-foreground/40" />
@@ -255,11 +255,11 @@ const Settings = () => {
       <Section title="About" icon={<Info size={16} />}>
         <div className="px-5">
           <div className="flex items-center gap-4 py-4 border-b border-border/40">
-            <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg shadow-primary/20">
-              <Radio size={28} className="text-primary-foreground" />
+            <div className="h-14 w-14 rounded-2xl gradient-primary flex items-center justify-center shadow-lg shadow-primary/20">
+              <Radio size={28} className="text-white" />
             </div>
             <div>
-              <p className="text-lg font-semibold text-foreground">World Radio</p>
+              <p className="text-lg font-extrabold text-foreground">Mero Radio</p>
               <p className="text-sm text-muted-foreground">Version 1.0.0</p>
             </div>
           </div>
@@ -271,16 +271,16 @@ const Settings = () => {
           <div className="py-4 border-b border-border/40">
             <p className="text-sm text-muted-foreground leading-relaxed">
               Stream 30,000+ radio stations from around the world. 
-              Free and open source. Made with ❤️
+              Free and open source. Made with ❤️ in Nepal
             </p>
           </div>
           <div className="py-4">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Contact</p>
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Contact</p>
             <a 
-              href="mailto:social@pandeykapil.com.np" 
-              className="text-sm text-primary font-medium hover:underline"
+              href="mailto:radio@pandeykapil.com.np" 
+              className="text-sm text-primary font-semibold hover:underline"
             >
-              social@pandeykapil.com.np
+              radio@pandeykapil.com.np
             </a>
             <p className="text-xs text-muted-foreground mt-1">
               <a href="https://radio.pandeykapil.com.np" className="hover:underline" target="_blank" rel="noopener noreferrer">
@@ -317,7 +317,7 @@ const SettingRow = ({ icon, label, description, children }: {
   <div className="flex items-center gap-4 py-4 border-b border-border/40 last:border-b-0">
     <span className="text-muted-foreground">{icon}</span>
     <div className="flex-1">
-      <p className="text-[15px] font-medium text-foreground">{label}</p>
+      <p className="text-[15px] font-semibold text-foreground">{label}</p>
       {description && <p className="text-xs text-muted-foreground mt-0.5">{description}</p>}
     </div>
     {children}

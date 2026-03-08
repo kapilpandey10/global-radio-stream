@@ -5,7 +5,7 @@ import { StationLogo } from "@/components/StationLogo";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { MapPin, TrendingUp, Star, ChevronRight, Clock } from "lucide-react";
+import { MapPin, TrendingUp, Star, ChevronRight, Clock, Radio } from "lucide-react";
 
 const Index = () => {
   const { data: userCountry } = useUserCountry();
@@ -17,29 +17,44 @@ const Index = () => {
 
   return (
     <div className="max-w-2xl mx-auto">
-      {/* Header */}
-      <div className="px-5 pt-14 pb-2">
-        <h1 className="text-3xl font-bold text-foreground tracking-tight">Listen Now</h1>
+      {/* Hero Header */}
+      <div className="px-5 pt-14 pb-4">
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }} 
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center gap-3 mb-1"
+        >
+          <div className="h-10 w-10 rounded-2xl gradient-primary flex items-center justify-center shadow-lg shadow-primary/25">
+            <Radio size={20} className="text-white" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-extrabold text-foreground tracking-tight">Mero Radio</h1>
+            <p className="text-xs text-muted-foreground font-medium">30,000+ stations worldwide</p>
+          </div>
+        </motion.div>
       </div>
 
       {/* Recently Played Horizontal Scroll */}
       {recentlyPlayed.length > 0 && (
-        <section className="mt-4">
+        <section className="mt-2">
           <div className="flex items-center justify-between px-5 mb-3">
-            <h2 className="text-lg font-semibold flex items-center gap-2 text-foreground">
-              <Clock size={18} className="text-primary" /> Recently Played
+            <h2 className="text-base font-bold flex items-center gap-2 text-foreground">
+              <Clock size={16} className="text-primary" /> Recently Played
             </h2>
           </div>
           <div className="flex gap-3 overflow-x-auto scrollbar-hide px-5 pb-2">
-            {recentlyPlayed.slice(0, 10).map(s => (
+            {recentlyPlayed.slice(0, 10).map((s, i) => (
               <motion.button
                 key={s.stationuuid}
-                whileTap={{ scale: 0.95 }}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: i * 0.05 }}
+                whileTap={{ scale: 0.92 }}
                 onClick={() => play(s)}
-                className="flex flex-col items-center gap-2 min-w-[80px] max-w-[80px]"
+                className="flex flex-col items-center gap-2 min-w-[76px] max-w-[76px]"
               >
-                <StationLogo src={s.favicon} name={s.name} size="md" className="rounded-xl" />
-                <span className="text-[11px] text-muted-foreground text-center leading-tight line-clamp-2 w-full">
+                <StationLogo src={s.favicon} name={s.name} size="md" className="rounded-2xl shadow-md" />
+                <span className="text-[11px] text-muted-foreground text-center leading-tight line-clamp-2 w-full font-medium">
                   {s.name}
                 </span>
               </motion.button>
@@ -52,12 +67,12 @@ const Index = () => {
       {userCountry && (
         <section className="mt-6">
           <div className="flex items-center justify-between px-5 mb-1">
-            <h2 className="text-lg font-semibold flex items-center gap-2 text-foreground">
-              <MapPin size={18} className="text-primary" /> Near You
+            <h2 className="text-base font-bold flex items-center gap-2 text-foreground">
+              <MapPin size={16} className="text-primary" /> Near You
             </h2>
             <button
               onClick={() => navigate(`/countries/${userCountry}`)}
-              className="text-primary text-sm font-medium flex items-center active:opacity-60"
+              className="text-primary text-sm font-semibold flex items-center active:opacity-60"
             >
               See All <ChevronRight size={16} />
             </button>
@@ -75,8 +90,8 @@ const Index = () => {
       {/* Top Stations */}
       <section className="mt-6">
         <div className="flex items-center justify-between px-5 mb-1">
-          <h2 className="text-lg font-semibold flex items-center gap-2 text-foreground">
-            <Star size={18} className="text-primary" /> Top Stations
+          <h2 className="text-base font-bold flex items-center gap-2 text-foreground">
+            <Star size={16} className="text-primary" /> Top Stations
           </h2>
         </div>
         <div className="px-4">
@@ -89,10 +104,10 @@ const Index = () => {
       </section>
 
       {/* Trending */}
-      <section className="mt-6">
+      <section className="mt-6 pb-4">
         <div className="flex items-center justify-between px-5 mb-1">
-          <h2 className="text-lg font-semibold flex items-center gap-2 text-foreground">
-            <TrendingUp size={18} className="text-primary" /> Trending
+          <h2 className="text-base font-bold flex items-center gap-2 text-foreground">
+            <TrendingUp size={16} className="text-primary" /> Trending
           </h2>
         </div>
         <div className="px-4">

@@ -240,6 +240,11 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const toggleNowPlaying = useCallback(() => { setState(s => ({ ...s, showNowPlaying: !s.showNowPlaying })); }, []);
 
+  const stop = useCallback(() => {
+    stopCurrentPlayer();
+    setState(s => ({ ...s, currentStation: null, isPlaying: false, isLoading: false, showNowPlaying: false, nowPlayingInfo: null }));
+  }, [stopCurrentPlayer]);
+
   const seekAudio = useCallback((seconds: number) => {
     const audio = usingFallbackRef.current
       ? fallbackAudioRef.current

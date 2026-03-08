@@ -54,7 +54,7 @@ const Countries = () => {
       ...s,
       lat: s.geo_lat!,
       lng: s.geo_long!,
-      size: currentStation?.stationuuid === s.stationuuid && isPlaying ? 0.35 : 0.12,
+      size: currentStation?.stationuuid === s.stationuuid && isPlaying ? 0.18 : 0.04,
       color: currentStation?.stationuuid === s.stationuuid && isPlaying 
         ? "#ef4444" 
         : "#22c55e",

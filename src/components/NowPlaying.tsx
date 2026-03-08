@@ -93,8 +93,8 @@ export const NowPlaying = () => {
               {isPlaying ? "Live" : "Paused"}
             </span>
           </div>
-          <button onClick={handleShare} className="p-2 -mr-2 active:scale-90 transition-transform rounded-full hover:bg-muted">
-            <Share2 size={22} className="text-foreground" />
+          <button onClick={stop} className="p-2 -mr-2 active:scale-90 transition-transform rounded-full hover:bg-destructive/10" title="Close player">
+            <X size={22} className="text-foreground" />
           </button>
         </div>
 

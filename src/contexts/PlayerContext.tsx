@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useRef, useCallback, useEffect } from "react";
 import { RadioStation } from "@/types/radio";
-import { IcecastMetadataPlayer } from "icecast-metadata-js";
+import IcecastMetadataPlayer from "icecast-metadata-player";
 
 interface Settings {
   theme: "light" | "dark" | "system";

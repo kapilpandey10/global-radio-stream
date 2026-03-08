@@ -276,7 +276,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   return (
     <PlayerContext.Provider value={{
-      ...state, play, pause, resume, setVolume, toggleNowPlaying,
+      ...state, play, pause, resume, stop, setVolume, toggleNowPlaying,
       favorites, toggleFavorite, isFavorite, settings, updateSettings, recentlyPlayed,
       skipBack, skipForward: skipForwardFn,
     }}>

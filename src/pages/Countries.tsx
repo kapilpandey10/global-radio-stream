@@ -266,6 +266,34 @@ const Countries = () => {
         </AnimatePresence>
       </div>
 
+      {/* Zoom controls & GPS button */}
+      <div className="absolute right-4 bottom-20 z-20 flex flex-col gap-2">
+        <button
+          onClick={goToMyLocation}
+          className={cn(
+            "w-10 h-10 rounded-full flex items-center justify-center border border-white/10 backdrop-blur-xl transition-all",
+            locating ? "bg-green-500/20 text-green-400" : "bg-black/50 text-white/70 hover:text-white hover:bg-white/10"
+          )}
+          title="Go to my location"
+        >
+          <Navigation size={16} className={locating ? "animate-pulse" : ""} />
+        </button>
+        <button
+          onClick={zoomIn}
+          className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-xl flex items-center justify-center border border-white/10 text-white/70 hover:text-white hover:bg-white/10 transition-all"
+          title="Zoom in"
+        >
+          <Plus size={16} />
+        </button>
+        <button
+          onClick={zoomOut}
+          className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-xl flex items-center justify-center border border-white/10 text-white/70 hover:text-white hover:bg-white/10 transition-all"
+          title="Zoom out"
+        >
+          <Minus size={16} />
+        </button>
+      </div>
+
       {/* Station count & branding */}
       <div className="absolute bottom-4 left-4 z-10 flex items-center gap-2">
         <div className="bg-black/50 backdrop-blur-sm rounded-full px-3 py-1.5 flex items-center gap-2 border border-white/10">

@@ -274,6 +274,45 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setSettings(prev => ({ ...prev, ...partial }));
   }, []);
 
+  // Media Session API for background play and lock screen controls
+  useEffect(() => {
+    if ('mediaSession' in navigator && state.currentStation) {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: state.nowPlayingInfo || state.currentStation.name,
+        artist: state.nowPlayingInfo ? state.currentStation.name : "Mero Radio",
+        album: state.currentStation.country || "Live Radio",
+        artwork: [
+          { src: state.currentStation.favicon || '/apple-touch-icon.png', sizes: '96x96', type: 'image/png' },
+          { src: state.currentStation.favicon || '/apple-touch-icon.png', sizes: '128x128', type: 'image/png' },
+          { src: state.currentStation.favicon || '/apple-touch-icon.png', sizes: '192x192', type: 'image/png' },
+          { src: state.currentStation.favicon || '/apple-touch-icon.png', sizes: '256x256', type: 'image/png' },
+          { src: state.currentStation.favicon || '/apple-touch-icon.png', sizes: '384x384', type: 'image/png' },
+          { src: state.currentStation.favicon || '/apple-touch-icon.png', sizes: '512x512', type: 'image/png' },
+        ]
+      });
+
+      navigator.mediaSession.playbackState = state.isPlaying ? 'playing' : 'paused';
+
+      // Action handlers
+      navigator.mediaSession.setActionHandler('play', () => { resume(); });
+      navigator.mediaSession.setActionHandler('pause', () => { pause(); });
+      navigator.mediaSession.setActionHandler('stop', () => { stop(); });
+      navigator.mediaSession.setActionHandler('seekbackward', () => { skipBack(); });
+      navigator.mediaSession.setActionHandler('seekforward', () => { skipForwardFn(); });
+    }
+
+    return () => {
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.metadata = null;
+        navigator.mediaSession.setActionHandler('play', null);
+        navigator.mediaSession.setActionHandler('pause', null);
+        navigator.mediaSession.setActionHandler('stop', null);
+        navigator.mediaSession.setActionHandler('seekbackward', null);
+        navigator.mediaSession.setActionHandler('seekforward', null);
+      }
+    };
+  }, [state.currentStation, state.isPlaying, state.nowPlayingInfo, pause, resume, stop, skipBack, skipForwardFn]);
+
   return (
     <PlayerContext.Provider value={{
       ...state, play, pause, resume, stop, setVolume, toggleNowPlaying,

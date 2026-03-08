@@ -85,7 +85,6 @@ const Countries = () => {
     setSelectedLng(station.lng);
     
     if (globeRef.current) {
-      globeRef.current.controls().autoRotate = false;
       globeRef.current.pointOfView({ lat: station.lat, lng: station.lng, altitude: 0.8 }, 1200);
     }
   };

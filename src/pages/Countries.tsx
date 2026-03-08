@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useGeoStations, useNearbyStations } from "@/hooks/useRadioAPI";
-import { Search, MapPin, Radio, X, Play, ChevronRight, Loader2 } from "lucide-react";
+import { Search, MapPin, Radio, X, Play, ChevronRight, Loader2, Plus, Minus, Navigation } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import Globe3D from "react-globe.gl";
@@ -19,6 +19,8 @@ const Countries = () => {
   const [selectedLat, setSelectedLat] = useState<number | null>(null);
   const [selectedLng, setSelectedLng] = useState<number | null>(null);
   const [globeSize, setGlobeSize] = useState({ w: 400, h: 600 });
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [locating, setLocating] = useState(false);
   
   const { data: nearbyStations } = useNearbyStations(selectedLat, selectedLng, 8);
 
@@ -68,6 +70,53 @@ const Countries = () => {
       globeRef.current.controls().enableZoom = true;
       globeRef.current.controls().enableRotate = true;
     }
+  }, []);
+
+  // Auto-detect user GPS location and zoom in
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        setUserLocation(loc);
+        setLocating(false);
+        if (globeRef.current) {
+          setTimeout(() => {
+            globeRef.current?.pointOfView({ lat: loc.lat, lng: loc.lng, altitude: 1.2 }, 2000);
+          }, 500);
+        }
+      },
+      () => setLocating(false),
+      { enableHighAccuracy: false, timeout: 8000 }
+    );
+  }, []);
+
+  const zoomIn = useCallback(() => {
+    if (!globeRef.current) return;
+    const pov = globeRef.current.pointOfView();
+    globeRef.current.pointOfView({ ...pov, altitude: Math.max(0.3, pov.altitude * 0.7) }, 400);
+  }, []);
+
+  const zoomOut = useCallback(() => {
+    if (!globeRef.current) return;
+    const pov = globeRef.current.pointOfView();
+    globeRef.current.pointOfView({ ...pov, altitude: Math.min(4, pov.altitude * 1.4) }, 400);
+  }, []);
+
+  const goToMyLocation = useCallback(() => {
+    if (!navigator.geolocation) return;
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        setUserLocation(loc);
+        setLocating(false);
+        globeRef.current?.pointOfView({ lat: loc.lat, lng: loc.lng, altitude: 1.0 }, 1200);
+      },
+      () => setLocating(false),
+      { enableHighAccuracy: true, timeout: 8000 }
+    );
   }, []);
 
   // Search results list
@@ -215,6 +264,34 @@ const Countries = () => {
             </motion.div>
           )}
         </AnimatePresence>
+      </div>
+
+      {/* Zoom controls & GPS button */}
+      <div className="absolute right-4 bottom-20 z-20 flex flex-col gap-2">
+        <button
+          onClick={goToMyLocation}
+          className={cn(
+            "w-10 h-10 rounded-full flex items-center justify-center border border-white/10 backdrop-blur-xl transition-all",
+            locating ? "bg-green-500/20 text-green-400" : "bg-black/50 text-white/70 hover:text-white hover:bg-white/10"
+          )}
+          title="Go to my location"
+        >
+          <Navigation size={16} className={locating ? "animate-pulse" : ""} />
+        </button>
+        <button
+          onClick={zoomIn}
+          className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-xl flex items-center justify-center border border-white/10 text-white/70 hover:text-white hover:bg-white/10 transition-all"
+          title="Zoom in"
+        >
+          <Plus size={16} />
+        </button>
+        <button
+          onClick={zoomOut}
+          className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-xl flex items-center justify-center border border-white/10 text-white/70 hover:text-white hover:bg-white/10 transition-all"
+          title="Zoom out"
+        >
+          <Minus size={16} />
+        </button>
       </div>
 
       {/* Station count & branding */}

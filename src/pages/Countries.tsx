@@ -79,13 +79,40 @@ const Countries = () => {
     ).slice(0, 8);
   }, [search, geoStations]);
 
+  const findNearestStation = (lat: number, lng: number): RadioStation | null => {
+    if (!filtered || filtered.length === 0) return null;
+    let nearest: RadioStation | null = null;
+    let minDist = Infinity;
+    const toRad = (d: number) => d * Math.PI / 180;
+    for (const s of filtered) {
+      if (!s.geo_lat || !s.geo_long) continue;
+      const dLat = toRad(s.geo_lat - lat);
+      const dLng = toRad(s.geo_long - lng);
+      const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat)) * Math.cos(toRad(s.geo_lat)) * Math.sin(dLng/2)**2;
+      const dist = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      if (dist < minDist) { minDist = dist; nearest = s; }
+    }
+    return nearest;
+  };
+
   const handleStationClick = (station: any) => {
     setSelectedStation(station);
     setSelectedLat(station.lat);
     setSelectedLng(station.lng);
-    
     if (globeRef.current) {
       globeRef.current.pointOfView({ lat: station.lat, lng: station.lng, altitude: 0.8 }, 1200);
+    }
+  };
+
+  const handleGlobeClick = ({ lat, lng }: { lat: number; lng: number }) => {
+    const nearest = findNearestStation(lat, lng);
+    if (!nearest) return;
+    setSelectedStation(nearest);
+    setSelectedLat(nearest.geo_lat);
+    setSelectedLng(nearest.geo_long);
+    play(nearest);
+    if (globeRef.current && nearest.geo_lat && nearest.geo_long) {
+      globeRef.current.pointOfView({ lat: nearest.geo_lat, lng: nearest.geo_long, altitude: 0.8 }, 1200);
     }
   };
 
@@ -133,6 +160,7 @@ const Countries = () => {
               </div>
             `}
             onPointClick={handleStationClick}
+            onGlobeClick={handleGlobeClick}
             width={globeSize.w}
             height={globeSize.h}
             atmosphereColor="#22c55e"

@@ -98,7 +98,6 @@ const Countries = () => {
     setSelectedLat(null);
     setSelectedLng(null);
     if (globeRef.current) {
-      globeRef.current.controls().autoRotate = true;
       globeRef.current.pointOfView({ altitude: 2.2 }, 800);
     }
   };

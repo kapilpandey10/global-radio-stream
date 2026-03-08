@@ -1,11 +1,32 @@
 import { usePlayer } from "@/contexts/PlayerContext";
 import { StationLogo } from "./StationLogo";
-import { Play, Pause, Loader2, ChevronDown, Heart, SkipBack, SkipForward, Share2, Music2 } from "lucide-react";
+import { Play, Pause, Loader2, ChevronDown, Heart, Share2, Music2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { VolumeSlider } from "./VolumeSlider";
 import { StationInfoDialog } from "./StationInfoDialog";
+
+const SkipIcon = ({ seconds, direction }: { seconds: number; direction: "back" | "forward" }) => (
+  <div className="relative flex items-center justify-center w-10 h-10">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 text-foreground">
+      {direction === "back" ? (
+        <>
+          <path d="M2.5 2v6h6" />
+          <path d="M2.5 13a10 10 0 1 0 2.26-6.33L2.5 8" />
+        </>
+      ) : (
+        <>
+          <path d="M21.5 2v6h-6" />
+          <path d="M21.5 13a10 10 0 1 1-2.26-6.33L21.5 8" />
+        </>
+      )}
+    </svg>
+    <span className="absolute text-[9px] font-bold text-foreground" style={{ marginTop: '2px' }}>
+      {seconds}
+    </span>
+  </div>
+);
 
 export const NowPlaying = () => {
   const {
@@ -52,7 +73,7 @@ export const NowPlaying = () => {
           />
         )}
 
-        {/* Header - fixed */}
+        {/* Header */}
         <div className="relative flex items-center justify-between px-5 pt-12 pb-2 shrink-0">
           <button onClick={toggleNowPlaying} className="p-2 -ml-2 active:scale-90 transition-transform rounded-full hover:bg-muted">
             <ChevronDown size={28} className="text-foreground" />
@@ -80,7 +101,7 @@ export const NowPlaying = () => {
         {/* Scrollable content */}
         <div className="relative flex-1 overflow-y-auto scrollbar-hide">
           <div className="flex flex-col items-center px-6 py-4 gap-4 min-h-full">
-            {/* Artwork - smaller to fit everything */}
+            {/* Artwork */}
             <motion.div
               animate={isPlaying ? { scale: [1, 1.01, 1] } : { scale: 0.95, opacity: 0.8 }}
               transition={isPlaying ? { repeat: Infinity, duration: 4, ease: "easeInOut" } : { duration: 0.5 }}
@@ -131,7 +152,7 @@ export const NowPlaying = () => {
                 <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Paused</span>
               )}
 
-              {/* Station Name - tap for details */}
+              {/* Station Name */}
               <button 
                 onClick={() => setShowStationInfo(true)}
                 className="w-full active:opacity-70 transition-opacity group"
@@ -191,13 +212,13 @@ export const NowPlaying = () => {
             </div>
 
             {/* Transport Controls */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               <button
                 onClick={() => prevStation && play(prevStation)}
                 disabled={!prevStation}
-                className="p-3 active:scale-90 transition-all disabled:opacity-20 rounded-full hover:bg-muted"
+                className="p-2 active:scale-90 transition-all disabled:opacity-20 rounded-full hover:bg-muted"
               >
-                <SkipBack size={24} className="text-foreground" fill="currentColor" />
+                <SkipIcon seconds={settings.skipBackward} direction="back" />
               </button>
               
               <button
@@ -216,17 +237,10 @@ export const NowPlaying = () => {
               <button
                 onClick={() => nextStation && play(nextStation)}
                 disabled={!nextStation}
-                className="p-3 active:scale-90 transition-all disabled:opacity-20 rounded-full hover:bg-muted"
+                className="p-2 active:scale-90 transition-all disabled:opacity-20 rounded-full hover:bg-muted"
               >
-                <SkipForward size={24} className="text-foreground" fill="currentColor" />
+                <SkipIcon seconds={settings.skipForward} direction="forward" />
               </button>
-            </div>
-
-            {/* Skip duration labels */}
-            <div className="flex items-center justify-center gap-8 text-[10px] text-muted-foreground -mt-2">
-              <span>{settings.skipBackward}s</span>
-              <span className="w-16" />
-              <span>{settings.skipForward}s</span>
             </div>
 
             {/* Volume */}

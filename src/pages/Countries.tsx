@@ -1,117 +1,89 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { useCountries } from "@/hooks/useRadioAPI";
+import { useGeoStations, useNearbyStations } from "@/hooks/useRadioAPI";
 import { useNavigate } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Globe, List, MapPin } from "lucide-react";
-import { motion } from "framer-motion";
+import { Search, Globe, List, MapPin, Radio, X, Play, ChevronRight } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import Globe3D from "react-globe.gl";
+import { usePlayer } from "@/contexts/PlayerContext";
+import { RadioStation } from "@/types/radio";
+import { StationLogo } from "@/components/StationLogo";
 
 const Countries = () => {
-  const { data: countries, isLoading } = useCountries();
+  const { data: geoStations, isLoading } = useGeoStations(300);
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<"globe" | "list">("globe");
   const navigate = useNavigate();
   const globeRef = useRef<any>(null);
-  const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
+  const { play, currentStation, isPlaying } = usePlayer();
+  
+  const [selectedStation, setSelectedStation] = useState<RadioStation | null>(null);
+  const [selectedLat, setSelectedLat] = useState<number | null>(null);
+  const [selectedLng, setSelectedLng] = useState<number | null>(null);
+  
+  const { data: nearbyStations } = useNearbyStations(selectedLat, selectedLng, 5);
 
-  const filtered = countries?.filter(c =>
-    c.name.toLowerCase().includes(search.toLowerCase())
-  ) || [];
+  // Filter stations by search
+  const filtered = useMemo(() => {
+    if (!geoStations) return [];
+    if (!search) return geoStations;
+    return geoStations.filter(s =>
+      s.name.toLowerCase().includes(search.toLowerCase()) ||
+      s.country.toLowerCase().includes(search.toLowerCase())
+    );
+  }, [geoStations, search]);
 
-  // Country coordinates for the globe
-  const countryData = useMemo(() => {
-    if (!countries) return [];
-    
-    const countryCoords: Record<string, { lat: number; lng: number }> = {
-      US: { lat: 37.0902, lng: -95.7129 },
-      GB: { lat: 55.3781, lng: -3.4360 },
-      DE: { lat: 51.1657, lng: 10.4515 },
-      FR: { lat: 46.2276, lng: 2.2137 },
-      ES: { lat: 40.4637, lng: -3.7492 },
-      IT: { lat: 41.8719, lng: 12.5674 },
-      BR: { lat: -14.2350, lng: -51.9253 },
-      JP: { lat: 36.2048, lng: 138.2529 },
-      AU: { lat: -25.2744, lng: 133.7751 },
-      CA: { lat: 56.1304, lng: -106.3468 },
-      IN: { lat: 20.5937, lng: 78.9629 },
-      CN: { lat: 35.8617, lng: 104.1954 },
-      RU: { lat: 61.5240, lng: 105.3188 },
-      MX: { lat: 23.6345, lng: -102.5528 },
-      AR: { lat: -38.4161, lng: -63.6167 },
-      ZA: { lat: -30.5595, lng: 22.9375 },
-      NL: { lat: 52.1326, lng: 5.2913 },
-      SE: { lat: 60.1282, lng: 18.6435 },
-      NO: { lat: 60.4720, lng: 8.4689 },
-      PL: { lat: 51.9194, lng: 19.1451 },
-      AT: { lat: 47.5162, lng: 14.5501 },
-      CH: { lat: 46.8182, lng: 8.2275 },
-      BE: { lat: 50.5039, lng: 4.4699 },
-      PT: { lat: 39.3999, lng: -8.2245 },
-      GR: { lat: 39.0742, lng: 21.8243 },
-      TR: { lat: 38.9637, lng: 35.2433 },
-      KR: { lat: 35.9078, lng: 127.7669 },
-      ID: { lat: -0.7893, lng: 113.9213 },
-      TH: { lat: 15.8700, lng: 100.9925 },
-      PH: { lat: 12.8797, lng: 121.7740 },
-      MY: { lat: 4.2105, lng: 101.9758 },
-      SG: { lat: 1.3521, lng: 103.8198 },
-      NZ: { lat: -40.9006, lng: 174.8860 },
-      IE: { lat: 53.1424, lng: -7.6921 },
-      DK: { lat: 56.2639, lng: 9.5018 },
-      FI: { lat: 61.9241, lng: 25.7482 },
-      CZ: { lat: 49.8175, lng: 15.4730 },
-      HU: { lat: 47.1625, lng: 19.5033 },
-      RO: { lat: 45.9432, lng: 24.9668 },
-      UA: { lat: 48.3794, lng: 31.1656 },
-      EG: { lat: 26.8206, lng: 30.8025 },
-      NG: { lat: 9.0820, lng: 8.6753 },
-      KE: { lat: -0.0236, lng: 37.9062 },
-      CO: { lat: 4.5709, lng: -74.2973 },
-      CL: { lat: -35.6751, lng: -71.5430 },
-      PE: { lat: -9.1900, lng: -75.0152 },
-      VE: { lat: 6.4238, lng: -66.5897 },
-      PK: { lat: 30.3753, lng: 69.3451 },
-      BD: { lat: 23.6850, lng: 90.3563 },
-      VN: { lat: 14.0583, lng: 108.2772 },
-      SA: { lat: 23.8859, lng: 45.0792 },
-      AE: { lat: 23.4241, lng: 53.8478 },
-      IL: { lat: 31.0461, lng: 34.8516 },
-      HK: { lat: 22.3193, lng: 114.1694 },
-      TW: { lat: 23.6978, lng: 120.9605 },
-    };
-
-    return countries.map(c => ({
-      ...c,
-      lat: countryCoords[c.iso_3166_1]?.lat || 0,
-      lng: countryCoords[c.iso_3166_1]?.lng || 0,
-      size: Math.min(Math.max(c.stationcount / 500, 0.3), 2),
-    })).filter(c => c.lat !== 0);
-  }, [countries]);
+  // Prepare data for globe
+  const stationPoints = useMemo(() => {
+    return filtered.map(s => ({
+      ...s,
+      lat: s.geo_lat!,
+      lng: s.geo_long!,
+      size: 0.15,
+      color: currentStation?.stationuuid === s.stationuuid && isPlaying 
+        ? "#ef4444" 
+        : "hsl(var(--primary))",
+    }));
+  }, [filtered, currentStation, isPlaying]);
 
   // Auto-rotate globe
   useEffect(() => {
-    if (globeRef.current && viewMode === "globe") {
+    if (globeRef.current && viewMode === "globe" && !selectedStation) {
       globeRef.current.controls().autoRotate = true;
-      globeRef.current.controls().autoRotateSpeed = 0.5;
+      globeRef.current.controls().autoRotateSpeed = 0.3;
     }
-  }, [viewMode]);
+  }, [viewMode, selectedStation]);
 
-  const handleCountryClick = (country: any) => {
-    setSelectedCountry(country.iso_3166_1);
+  const handleStationClick = (station: any) => {
+    setSelectedStation(station);
+    setSelectedLat(station.lat);
+    setSelectedLng(station.lng);
+    
     if (globeRef.current) {
-      globeRef.current.pointOfView({ lat: country.lat, lng: country.lng, altitude: 1.5 }, 1000);
+      globeRef.current.controls().autoRotate = false;
+      globeRef.current.pointOfView({ lat: station.lat, lng: station.lng, altitude: 1.2 }, 1000);
     }
-    setTimeout(() => {
-      navigate(`/countries/${country.iso_3166_1}`);
-    }, 800);
+  };
+
+  const handlePlayStation = (station: RadioStation) => {
+    play(station);
+  };
+
+  const closePanel = () => {
+    setSelectedStation(null);
+    setSelectedLat(null);
+    setSelectedLng(null);
+    if (globeRef.current) {
+      globeRef.current.controls().autoRotate = true;
+    }
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-2xl mx-auto relative">
       <div className="px-5 pt-14 pb-2">
         <h1 className="text-3xl font-bold text-foreground tracking-tight">Explore</h1>
-        <p className="text-muted-foreground mt-1">Discover radio stations worldwide</p>
+        <p className="text-muted-foreground mt-1">Tap a station pin to play</p>
       </div>
 
       {/* Search & View Toggle */}
@@ -121,7 +93,7 @@ const Countries = () => {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search countries..."
+            placeholder="Search stations or countries..."
             className="w-full h-11 pl-10 pr-4 rounded-xl bg-muted text-foreground text-[15px] placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all border border-border/50"
           />
         </div>
@@ -148,83 +120,202 @@ const Countries = () => {
       </div>
 
       {viewMode === "globe" ? (
-        <div className="mt-4 mx-4 rounded-2xl overflow-hidden bg-card border border-border/50 shadow-lg" style={{ height: "400px" }}>
-          <Globe3D
-            ref={globeRef}
-            globeImageUrl="//unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
-            bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
-            backgroundImageUrl="//unpkg.com/three-globe/example/img/night-sky.png"
-            pointsData={countryData}
-            pointLat="lat"
-            pointLng="lng"
-            pointColor={() => "hsl(var(--primary))"}
-            pointAltitude={0.01}
-            pointRadius="size"
-            pointLabel={(d: any) => `
-              <div style="background: hsl(var(--card)); padding: 8px 12px; border-radius: 8px; border: 1px solid hsl(var(--border));">
-                <strong style="color: hsl(var(--foreground));">${d.name}</strong>
-                <br/>
-                <span style="color: hsl(var(--muted-foreground)); font-size: 12px;">${d.stationcount.toLocaleString()} stations</span>
+        <div className="mt-4 mx-4 rounded-2xl overflow-hidden bg-gradient-to-b from-slate-900 to-slate-950 border border-border/50 shadow-lg relative" style={{ height: "420px" }}>
+          {isLoading ? (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-center">
+                <Globe size={48} className="mx-auto text-primary animate-pulse mb-3" />
+                <p className="text-sm text-muted-foreground">Loading stations...</p>
               </div>
-            `}
-            onPointClick={handleCountryClick}
-            width={window.innerWidth > 600 ? 560 : window.innerWidth - 32}
-            height={400}
-            atmosphereColor="hsl(var(--primary))"
-            atmosphereAltitude={0.15}
-          />
+            </div>
+          ) : (
+            <Globe3D
+              ref={globeRef}
+              globeImageUrl="//unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
+              bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
+              backgroundImageUrl="//unpkg.com/three-globe/example/img/night-sky.png"
+              pointsData={stationPoints}
+              pointLat="lat"
+              pointLng="lng"
+              pointColor="color"
+              pointAltitude={0.01}
+              pointRadius="size"
+              pointLabel={(d: any) => `
+                <div style="background: rgba(0,0,0,0.85); padding: 10px 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px);">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 16px;">📻</span>
+                    <strong style="color: white; font-size: 14px;">${d.name}</strong>
+                  </div>
+                  <div style="color: rgba(255,255,255,0.7); font-size: 11px; margin-top: 4px;">
+                    ${d.country} ${d.state ? '· ' + d.state : ''}
+                  </div>
+                  <div style="color: rgba(255,255,255,0.5); font-size: 10px; margin-top: 2px;">
+                    Click to play
+                  </div>
+                </div>
+              `}
+              onPointClick={handleStationClick}
+              width={window.innerWidth > 600 ? 560 : window.innerWidth - 32}
+              height={420}
+              atmosphereColor="#6366f1"
+              atmosphereAltitude={0.12}
+            />
+          )}
+          
+          {/* Station count badge */}
+          <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-sm rounded-lg px-3 py-1.5 flex items-center gap-2">
+            <MapPin size={14} className="text-primary" />
+            <span className="text-xs text-white font-medium">{stationPoints.length} stations</span>
+          </div>
         </div>
       ) : (
-        <div className="px-4 mt-4">
-          {isLoading ? Array.from({ length: 20 }).map((_, i) => (
-            <Skeleton key={i} className="h-[60px] rounded-xl mb-2" />
-          )) : filtered.map((c, i) => (
+        <div className="px-4 mt-4 space-y-2">
+          {isLoading ? Array.from({ length: 10 }).map((_, i) => (
+            <Skeleton key={i} className="h-[72px] rounded-xl" />
+          )) : filtered.slice(0, 50).map((station, i) => (
             <motion.button
-              key={c.iso_3166_1}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: Math.min(i * 0.02, 0.4) }}
-              onClick={() => navigate(`/countries/${c.iso_3166_1}`)}
-              className="flex items-center gap-4 w-full py-3.5 px-3 rounded-xl mb-2 bg-card border border-border/50 text-left active:scale-[0.98] transition-all hover:border-primary/50"
+              key={station.stationuuid}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: Math.min(i * 0.02, 0.3) }}
+              onClick={() => handlePlayStation(station)}
+              className={cn(
+                "flex items-center gap-3 w-full p-3 rounded-xl bg-card border text-left active:scale-[0.98] transition-all",
+                currentStation?.stationuuid === station.stationuuid
+                  ? "border-primary bg-primary/5"
+                  : "border-border/50 hover:border-primary/50"
+              )}
             >
-              <img
-                src={`https://flagcdn.com/48x36/${c.iso_3166_1.toLowerCase()}.png`}
-                alt={c.name}
-                className="h-8 rounded-md shrink-0 shadow-sm"
-                onError={(e) => (e.currentTarget.style.display = "none")}
+              <StationLogo
+                src={station.favicon}
+                name={station.name}
+                size="sm"
+                playing={currentStation?.stationuuid === station.stationuuid && isPlaying}
+                className="rounded-xl"
               />
               <div className="flex-1 min-w-0">
-                <span className="text-[15px] font-semibold text-foreground truncate block">{c.name}</span>
-                <span className="text-xs text-muted-foreground flex items-center gap-1">
-                  <MapPin size={10} /> {c.stationcount.toLocaleString()} stations
-                </span>
+                <p className="font-semibold text-foreground truncate">{station.name}</p>
+                <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
+                  <MapPin size={10} /> {station.country} {station.state && `· ${station.state}`}
+                </p>
               </div>
+              <Play size={20} className="text-primary shrink-0" />
             </motion.button>
           ))}
         </div>
       )}
 
-      {/* Quick Stats */}
-      {countries && viewMode === "globe" && (
-        <div className="px-5 mt-6 mb-4">
-          <div className="grid grid-cols-3 gap-3">
-            <div className="bg-card rounded-xl p-4 border border-border/50 text-center">
-              <p className="text-2xl font-bold text-primary">{countries.length}</p>
-              <p className="text-xs text-muted-foreground">Countries</p>
+      {/* Selected Station Panel */}
+      <AnimatePresence>
+        {selectedStation && viewMode === "globe" && (
+          <motion.div
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
+            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            className="fixed bottom-0 left-0 right-0 bg-background border-t border-border/50 rounded-t-3xl shadow-2xl z-40 max-h-[60vh] overflow-hidden"
+          >
+            <div className="p-5">
+              {/* Handle */}
+              <div className="w-10 h-1 bg-muted rounded-full mx-auto mb-4" />
+              
+              {/* Close button */}
+              <button
+                onClick={closePanel}
+                className="absolute top-4 right-4 p-2 rounded-full bg-muted hover:bg-muted/80 transition-colors"
+              >
+                <X size={18} />
+              </button>
+
+              {/* Selected Station */}
+              <div className="flex items-center gap-4 mb-4">
+                <StationLogo
+                  src={selectedStation.favicon}
+                  name={selectedStation.name}
+                  size="lg"
+                  playing={currentStation?.stationuuid === selectedStation.stationuuid && isPlaying}
+                  className="rounded-2xl"
+                />
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-lg font-bold text-foreground truncate">{selectedStation.name}</h3>
+                  <p className="text-sm text-muted-foreground flex items-center gap-1">
+                    <MapPin size={12} /> {selectedStation.country}
+                    {selectedStation.state && ` · ${selectedStation.state}`}
+                  </p>
+                  {selectedStation.language && (
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {selectedStation.language}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Play Button */}
+              <button
+                onClick={() => handlePlayStation(selectedStation)}
+                className={cn(
+                  "w-full py-3.5 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all active:scale-[0.98]",
+                  currentStation?.stationuuid === selectedStation.stationuuid && isPlaying
+                    ? "bg-red-500 text-white"
+                    : "bg-primary text-primary-foreground"
+                )}
+              >
+                {currentStation?.stationuuid === selectedStation.stationuuid && isPlaying ? (
+                  <>
+                    <Radio size={18} className="animate-pulse" /> Now Playing
+                  </>
+                ) : (
+                  <>
+                    <Play size={18} fill="currentColor" /> Play Station
+                  </>
+                )}
+              </button>
+
+              {/* Nearby Stations */}
+              {nearbyStations && nearbyStations.length > 1 && (
+                <div className="mt-6">
+                  <h4 className="text-sm font-semibold text-muted-foreground mb-3 flex items-center gap-2">
+                    <MapPin size={14} /> Nearby Stations
+                  </h4>
+                  <div className="space-y-2 max-h-[200px] overflow-y-auto">
+                    {nearbyStations
+                      .filter(s => s.stationuuid !== selectedStation.stationuuid)
+                      .slice(0, 4)
+                      .map((station) => (
+                        <button
+                          key={station.stationuuid}
+                          onClick={() => {
+                            setSelectedStation(station);
+                            if (globeRef.current && station.geo_lat && station.geo_long) {
+                              globeRef.current.pointOfView({ 
+                                lat: station.geo_lat, 
+                                lng: station.geo_long, 
+                                altitude: 1.2 
+                              }, 800);
+                            }
+                          }}
+                          className="flex items-center gap-3 w-full p-2.5 rounded-xl bg-muted/50 hover:bg-muted transition-colors text-left"
+                        >
+                          <StationLogo
+                            src={station.favicon}
+                            name={station.name}
+                            size="xs"
+                            className="rounded-lg"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-foreground truncate">{station.name}</p>
+                            <p className="text-xs text-muted-foreground">{station.country}</p>
+                          </div>
+                          <ChevronRight size={16} className="text-muted-foreground" />
+                        </button>
+                      ))}
+                  </div>
+                </div>
+              )}
             </div>
-            <div className="bg-card rounded-xl p-4 border border-border/50 text-center">
-              <p className="text-2xl font-bold text-primary">
-                {countries.reduce((a, c) => a + c.stationcount, 0).toLocaleString()}
-              </p>
-              <p className="text-xs text-muted-foreground">Stations</p>
-            </div>
-            <div className="bg-card rounded-xl p-4 border border-border/50 text-center">
-              <p className="text-2xl font-bold text-primary">24/7</p>
-              <p className="text-xs text-muted-foreground">Streaming</p>
-            </div>
-          </div>
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

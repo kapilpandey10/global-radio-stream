@@ -79,3 +79,48 @@ export const useUserCountry = () =>
     staleTime: 60 * 60 * 1000,
     retry: 1,
   });
+
+// Fetch stations with geo coordinates for the globe
+export const useGeoStations = (limit = 500) =>
+  useQuery<RadioStation[]>({
+    queryKey: ["geo-stations", limit],
+    queryFn: async () => {
+      const data = await fetchJSON<RadioStation[]>(`/stations/search?has_geo_info=true&order=clickcount&reverse=true&limit=${limit}`);
+      return data.filter(s => s.geo_lat && s.geo_long);
+    },
+    staleTime: 10 * 60 * 1000,
+  });
+
+// Find nearby stations based on coordinates
+export const useNearbyStations = (lat: number | null, lng: number | null, limit = 10) =>
+  useQuery<RadioStation[]>({
+    queryKey: ["nearby-stations", lat, lng, limit],
+    queryFn: async () => {
+      if (!lat || !lng) return [];
+      // Get stations with geo info and filter by distance
+      const data = await fetchJSON<RadioStation[]>(`/stations/search?has_geo_info=true&order=clickcount&reverse=true&limit=200`);
+      const withDistance = data
+        .filter(s => s.geo_lat && s.geo_long)
+        .map(s => ({
+          ...s,
+          distance: getDistance(lat, lng, s.geo_lat!, s.geo_long!)
+        }))
+        .sort((a, b) => a.distance - b.distance)
+        .slice(0, limit);
+      return withDistance;
+    },
+    enabled: lat !== null && lng !== null,
+    staleTime: 5 * 60 * 1000,
+  });
+
+// Haversine formula for distance calculation
+function getDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371; // Earth's radius in km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}

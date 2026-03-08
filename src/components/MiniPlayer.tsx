@@ -1,6 +1,6 @@
 import { usePlayer } from "@/contexts/PlayerContext";
 import { StationLogo } from "./StationLogo";
-import { Play, Pause, Loader2, ChevronUp } from "lucide-react";
+import { Play, Pause, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -15,29 +15,32 @@ export const MiniPlayer = () => {
         initial={{ y: 80 }}
         animate={{ y: 0 }}
         exit={{ y: 80 }}
-        className="fixed bottom-16 md:bottom-0 left-0 right-0 z-40 px-2 pb-1 md:px-4 md:pb-2"
+        className="fixed bottom-[52px] md:bottom-0 left-0 right-0 z-40"
       >
         <div
-          className="glass rounded-2xl p-2.5 flex items-center gap-3 shadow-lg cursor-pointer max-w-2xl mx-auto"
+          className="mx-2 mb-1 rounded-xl bg-card/95 backdrop-blur-xl border border-border/60 shadow-lg flex items-center gap-3 p-2 cursor-pointer max-w-xl md:mx-auto"
           onClick={toggleNowPlaying}
         >
-          <StationLogo src={currentStation.favicon} name={currentStation.name} size="sm" pulse={isPlaying} />
+          <StationLogo
+            src={currentStation.favicon}
+            name={currentStation.name}
+            size="xs"
+            playing={isPlaying}
+            className="rounded-lg"
+          />
 
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate text-foreground">{currentStation.name}</p>
-            <p className="text-xs text-muted-foreground truncate">{currentStation.country}</p>
+            <p className="text-[13px] font-medium truncate text-foreground">{currentStation.name}</p>
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={(e) => { e.stopPropagation(); isPlaying ? pause() : resume(); }}
-              className={cn("p-2.5 rounded-full transition-all", isPlaying ? "gradient-bg text-primary-foreground" : "bg-primary/10 text-primary")}
-            >
-              {isLoading ? <Loader2 size={18} className="animate-spin" /> :
-               isPlaying ? <Pause size={18} /> : <Play size={18} />}
-            </button>
-            <ChevronUp size={18} className="text-muted-foreground" />
-          </div>
+          <button
+            onClick={(e) => { e.stopPropagation(); isPlaying ? pause() : resume(); }}
+            className="p-1.5 active:scale-90 transition-transform"
+          >
+            {isLoading ? <Loader2 size={22} className="animate-spin text-primary" /> :
+             isPlaying ? <Pause size={22} className="text-foreground" fill="currentColor" /> :
+             <Play size={22} className="text-foreground" fill="currentColor" />}
+          </button>
         </div>
       </motion.div>
     </AnimatePresence>

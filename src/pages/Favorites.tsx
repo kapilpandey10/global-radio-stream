@@ -7,19 +7,20 @@ const Favorites = () => {
   const { favorites } = usePlayer();
 
   return (
-    <div className="px-4 pt-6 space-y-4 max-w-2xl mx-auto">
-      <h1 className="font-display font-bold text-2xl flex items-center gap-2">
-        <Heart size={24} className="text-accent" /> Favorites
-      </h1>
+    <div className="max-w-2xl mx-auto">
+      <div className="px-5 pt-14 pb-2">
+        <h1 className="text-3xl font-bold text-foreground tracking-tight">Library</h1>
+      </div>
 
       {favorites.length === 0 ? (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-20 text-muted-foreground">
-          <Heart size={48} className="mx-auto mb-4 opacity-20" />
-          <p className="text-sm">No favorites yet</p>
-          <p className="text-xs mt-1">Tap the heart icon on any station to save it</p>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-28">
+          <Heart size={40} className="mx-auto mb-3 text-muted-foreground/20" />
+          <p className="text-sm text-muted-foreground">Your favorite stations will appear here</p>
+          <p className="text-xs text-muted-foreground/60 mt-1">Tap the heart on any station to add it</p>
         </motion.div>
       ) : (
-        <div className="space-y-2">
+        <div className="px-4 mt-2">
+          <p className="text-sm text-muted-foreground px-1 mb-2">{favorites.length} station{favorites.length !== 1 && 's'}</p>
           {favorites.map(s => (
             <StationCard key={s.stationuuid} station={s} />
           ))}

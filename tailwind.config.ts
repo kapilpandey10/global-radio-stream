@@ -8,14 +8,11 @@ export default {
     container: {
       center: true,
       padding: "2rem",
-      screens: {
-        "2xl": "1400px",
-      },
+      screens: { "2xl": "1400px" },
     },
     extend: {
       fontFamily: {
-        sans: ["Inter", "sans-serif"],
-        display: ["Space Grotesk", "sans-serif"],
+        sans: ["-apple-system", "BlinkMacSystemFont", "Inter", "Segoe UI", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -68,23 +65,16 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       keyframes: {
-        "accordion-down": {
-          from: { height: "0" },
-          to: { height: "var(--radix-accordion-content-height)" },
-        },
-        "accordion-up": {
-          from: { height: "var(--radix-accordion-content-height)" },
-          to: { height: "0" },
-        },
-        "pulse-glow": {
-          "0%, 100%": { boxShadow: "0 0 20px 5px hsl(262 83% 58% / 0.3)" },
-          "50%": { boxShadow: "0 0 40px 10px hsl(262 83% 58% / 0.5)" },
+        "accordion-down": { from: { height: "0" }, to: { height: "var(--radix-accordion-content-height)" } },
+        "accordion-up": { from: { height: "var(--radix-accordion-content-height)" }, to: { height: "0" } },
+        "eq-bar": {
+          "0%, 100%": { height: "4px" },
+          "50%": { height: "16px" },
         },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        "pulse-glow": "pulse-glow 2s ease-in-out infinite",
       },
     },
   },

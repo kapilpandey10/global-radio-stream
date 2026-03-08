@@ -5,30 +5,32 @@ import { cn } from "@/lib/utils";
 interface StationLogoProps {
   src?: string;
   name: string;
-  size?: "sm" | "md" | "lg" | "xl";
+  size?: "xs" | "sm" | "md" | "lg" | "xl";
   className?: string;
-  pulse?: boolean;
+  playing?: boolean;
 }
 
 const sizes = {
-  sm: "h-10 w-10 text-xs",
-  md: "h-14 w-14 text-sm",
-  lg: "h-24 w-24 text-lg",
-  xl: "h-40 w-40 text-2xl",
+  xs: "h-8 w-8",
+  sm: "h-11 w-11",
+  md: "h-14 w-14",
+  lg: "h-24 w-24",
+  xl: "h-44 w-44",
 };
 
-const iconSizes = { sm: 16, md: 20, lg: 32, xl: 48 };
+const iconSizes = { xs: 12, sm: 16, md: 20, lg: 32, xl: 48 };
+const textSizes = { xs: "text-[8px]", sm: "text-[10px]", md: "text-xs", lg: "text-base", xl: "text-xl" };
 
-export const StationLogo = ({ src, name, size = "md", className, pulse }: StationLogoProps) => {
+export const StationLogo = ({ src, name, size = "md", className, playing }: StationLogoProps) => {
   const [imgError, setImgError] = useState(false);
-  const initials = name?.split(" ").slice(0, 2).map(w => w[0]).join("").toUpperCase() || "?";
+  const initials = name?.split(" ").slice(0, 2).map(w => w?.[0]).join("").toUpperCase() || "?";
 
   return (
     <div className={cn(
       "relative rounded-2xl overflow-hidden flex items-center justify-center shrink-0",
-      "bg-secondary border border-border/50",
+      "bg-secondary",
       sizes[size],
-      pulse && "animate-pulse-glow",
+      playing && "ring-2 ring-primary/40",
       className,
     )}>
       {src && !imgError ? (
@@ -42,7 +44,25 @@ export const StationLogo = ({ src, name, size = "md", className, pulse }: Statio
       ) : (
         <div className="flex flex-col items-center justify-center gap-0.5">
           <Radio size={iconSizes[size]} className="text-primary" />
-          {size !== "sm" && <span className="font-display font-semibold text-muted-foreground">{initials}</span>}
+          {(size !== "xs" && size !== "sm") && (
+            <span className={cn("font-semibold text-muted-foreground", textSizes[size])}>{initials}</span>
+          )}
+        </div>
+      )}
+      {/* Playing indicator */}
+      {playing && (
+        <div className="absolute bottom-1 right-1 flex items-end gap-[2px] h-3">
+          {[0, 1, 2].map(i => (
+            <div
+              key={i}
+              className="w-[3px] bg-primary rounded-full"
+              style={{
+                animation: `eq-bar 0.${4 + i * 2}s ease-in-out infinite alternate`,
+                animationDelay: `${i * 0.15}s`,
+                height: "4px",
+              }}
+            />
+          ))}
         </div>
       )}
     </div>

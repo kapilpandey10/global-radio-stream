@@ -3,7 +3,7 @@ import { RadioStation, Country } from "@/types/radio";
 
 const BASE = "https://de1.api.radio-browser.info/json";
 
-const fetchJSON = async <T>(path: string): Promise<T> => {
+const fetchJSON = async <T,>(path: string): Promise<T> => {
   const res = await fetch(`${BASE}${path}`);
   if (!res.ok) throw new Error("API error");
   return res.json();
@@ -54,4 +54,28 @@ export const useStationsByCountry = (countryCode: string) =>
     queryFn: () => fetchJSON(`/stations/bycountrycodeexact/${countryCode}?order=clickcount&reverse=true&limit=100`),
     enabled: !!countryCode,
     staleTime: 5 * 60 * 1000,
+  });
+
+export const useLocalStations = (countryCode: string | null) =>
+  useQuery<RadioStation[]>({
+    queryKey: ["local-stations", countryCode],
+    queryFn: () => fetchJSON(`/stations/bycountrycodeexact/${countryCode}?order=clickcount&reverse=true&limit=30`),
+    enabled: !!countryCode,
+    staleTime: 5 * 60 * 1000,
+  });
+
+export const useUserCountry = () =>
+  useQuery<string | null>({
+    queryKey: ["user-country"],
+    queryFn: async () => {
+      try {
+        const res = await fetch("https://ipapi.co/json/");
+        const data = await res.json();
+        return data.country_code || null;
+      } catch {
+        return null;
+      }
+    },
+    staleTime: 60 * 60 * 1000,
+    retry: 1,
   });

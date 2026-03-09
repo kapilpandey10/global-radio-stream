@@ -207,18 +207,28 @@ export const NowPlaying = () => {
                 className="w-full h-16"
               />
 
-              {/* Live progress indicator */}
+              {/* Progress indicator */}
               <div className="w-full">
                 <div className="h-1 bg-muted rounded-full overflow-hidden">
-                  <motion.div
-                    animate={isPlaying ? { x: ["-100%", "100%"] } : {}}
-                    transition={isPlaying ? { repeat: Infinity, duration: 3, ease: "linear" } : {}}
-                    className="h-full w-1/3 bg-gradient-to-r from-transparent via-primary/60 to-transparent"
-                  />
+                  {isLoading ? (
+                    <motion.div
+                      animate={{ x: ["-100%", "100%"] }}
+                      transition={{ repeat: Infinity, duration: 1.2, ease: "easeInOut" }}
+                      className="h-full w-2/3 bg-gradient-to-r from-transparent via-primary to-transparent"
+                    />
+                  ) : isPlaying ? (
+                    <motion.div
+                      animate={{ x: ["-100%", "100%"] }}
+                      transition={{ repeat: Infinity, duration: 3, ease: "linear" }}
+                      className="h-full w-1/3 bg-gradient-to-r from-transparent via-primary/60 to-transparent"
+                    />
+                  ) : (
+                    <div className="h-full w-0" />
+                  )}
                 </div>
                 <div className="flex justify-between mt-1 text-[10px] text-muted-foreground/60 font-medium">
-                  <span>LIVE</span>
-                  <span>{isPlaying ? "Streaming" : "Paused"}</span>
+                  <span>{isLoading ? "CONNECTING" : isPlaying ? "LIVE" : "STOPPED"}</span>
+                  <span>{isLoading ? "Buffering..." : isPlaying ? "Streaming" : "Paused"}</span>
                 </div>
               </div>
 

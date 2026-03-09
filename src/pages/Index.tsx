@@ -158,6 +158,7 @@ const Index = () => {
         </div>
       </section>
     </div>
+    <AddStationDialog open={showAddDialog} onOpenChange={setShowAddDialog} onAdded={refreshCustom} />
     </>
   );
 };

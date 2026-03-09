@@ -293,6 +293,9 @@ export const NowPlaying = () => {
 
               {/* Volume — horizontal Apple-style */}
               <VolumeSlider value={volume} onChange={setVolume} />
+
+              {/* Banner Ad */}
+              <BannerAd className="mt-4 rounded-2xl overflow-hidden" />
             </div>
           </div>
         </div>

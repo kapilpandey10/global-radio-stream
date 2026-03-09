@@ -144,6 +144,10 @@ const Index = () => {
           </section>
         )}
 
+        {/* Banner Ad */}
+        <section className="mt-4 px-5">
+          <BannerAd className="rounded-2xl overflow-hidden" />
+        </section>
 
         {/* Recently Played */}
         {recentlyPlayed.length > 0 && (

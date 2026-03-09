@@ -70,13 +70,28 @@ export const NowPlaying = () => {
             <ChevronDown size={26} className="text-muted-foreground" />
           </button>
           <div className="flex items-center gap-1.5">
-            <span className={cn(
-              "w-2 h-2 rounded-full",
-              isPlaying ? "bg-primary animate-pulse" : "bg-muted-foreground/40"
-            )} />
-            <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-              {isPlaying ? "Live" : "Paused"}
-            </span>
+            {isLoading ? (
+              <>
+                <Loader2 size={10} className="animate-spin text-primary" />
+                <span className="text-xs font-semibold uppercase tracking-widest text-primary">
+                  Buffering
+                </span>
+              </>
+            ) : isPlaying ? (
+              <>
+                <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                  Live
+                </span>
+              </>
+            ) : (
+              <>
+                <span className="w-2 h-2 rounded-full bg-muted-foreground/40" />
+                <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                  Paused
+                </span>
+              </>
+            )}
           </div>
           <button 
             onClick={() => setShowStationInfo(true)}

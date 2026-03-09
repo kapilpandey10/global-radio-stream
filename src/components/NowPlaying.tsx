@@ -47,6 +47,7 @@ export const NowPlaying = () => {
 
   return (
     <AnimatePresence>
+      <SEO station={currentStation} path={`/station/${currentStation.stationuuid}`} />
       <motion.div
         initial={{ y: "100%" }}
         animate={{ y: 0 }}

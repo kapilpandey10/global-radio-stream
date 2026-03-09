@@ -25,17 +25,19 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <Routes>
-            <Route element={<Layout />}>
-              <Route path="/" element={<Index />} />
-              <Route path="/search" element={<Search />} />
-              <Route path="/countries" element={<Countries />} />
-              <Route path="/countries/:code" element={<CountryStations />} />
-              <Route path="/favorites" element={<Favorites />} />
-              <Route path="/settings" element={<Settings />} />
-            </Route>
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <Suspense fallback={null}>
+            <Routes>
+              <Route element={<Layout />}>
+                <Route path="/" element={<Index />} />
+                <Route path="/search" element={<Search />} />
+                <Route path="/countries" element={<Countries />} />
+                <Route path="/countries/:code" element={<CountryStations />} />
+                <Route path="/favorites" element={<Favorites />} />
+                <Route path="/settings" element={<Settings />} />
+              </Route>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
         </BrowserRouter>
       </PlayerProvider>
     </TooltipProvider>

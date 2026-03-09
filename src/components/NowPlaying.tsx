@@ -9,6 +9,7 @@ import { StationInfoDialog } from "./StationInfoDialog";
 import { AudioVisualizer } from "./AudioVisualizer";
 import { shareStation } from "@/utils/share";
 import { VolumeSlider } from "./VolumeSlider";
+import { BannerAd } from "./BannerAd";
 
 const SkipIcon = ({ seconds, direction }: { seconds: number; direction: "back" | "forward" }) => (
   <div className="relative flex items-center justify-center w-8 h-8">

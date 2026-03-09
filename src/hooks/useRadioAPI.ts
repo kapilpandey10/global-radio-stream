@@ -75,7 +75,20 @@ export const useStationsByCountry = (countryCode: string) =>
 export const useLocalStations = (countryCode: string | null) =>
   useQuery<RadioStation[]>({
     queryKey: ["local-stations", countryCode],
-    queryFn: () => fetchJSON(`/stations/bycountrycodeexact/${countryCode}?order=clickcount&reverse=true&limit=30`),
+    queryFn: async () => {
+      const apiResults = await fetchJSON<RadioStation[]>(`/stations/bycountrycodeexact/${countryCode}?order=clickcount&reverse=true&limit=30`);
+      
+      // Get custom stations matching the country code
+      const customStations = getAllCustomStations().filter(
+        s => s.countrycode.toLowerCase() === countryCode?.toLowerCase()
+      );
+      
+      // Merge custom stations at the top
+      const apiIds = new Set(apiResults.map(s => s.url_resolved || s.url));
+      const uniqueCustom = customStations.filter(s => !apiIds.has(s.url_resolved || s.url));
+      
+      return [...uniqueCustom, ...apiResults];
+    },
     enabled: !!countryCode,
     staleTime: 5 * 60 * 1000,
   });

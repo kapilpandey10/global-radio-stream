@@ -102,8 +102,8 @@ export const NowPlaying = () => {
         </div>
 
         {/* Main content — scrollable */}
-        <div className="relative flex-1 overflow-y-auto scrollbar-hide">
-          <div className="flex flex-col items-center px-8 min-h-full justify-between py-2">
+        <div className="relative flex-1 overflow-y-auto overflow-x-hidden -webkit-overflow-scrolling-touch" style={{ WebkitOverflowScrolling: 'touch' }}>
+          <div className="flex flex-col items-center px-8 py-2" style={{ minHeight: 'min-content' }}>
             
             {/* Top section: Artwork + Info */}
             <div className="flex flex-col items-center w-full max-w-sm gap-6 flex-1 justify-center">

@@ -16,19 +16,20 @@ export const VolumeSlider = ({ value, onChange, className }: VolumeSliderProps) 
   
   const VolumeIcon = value === 0 ? VolumeX : value < 0.5 ? Volume1 : Volume2;
 
-  const handleTrackInteraction = useCallback((clientX: number) => {
+  const handleTrackInteraction = useCallback((clientY: number) => {
     if (!trackRef.current) return;
     const rect = trackRef.current.getBoundingClientRect();
-    const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    // Invert: top = max, bottom = min
+    const ratio = Math.max(0, Math.min(1, 1 - (clientY - rect.top) / rect.height));
     onChange(ratio);
   }, [onChange]);
 
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     e.preventDefault();
     setIsDragging(true);
-    handleTrackInteraction(e.clientX);
+    handleTrackInteraction(e.clientY);
     
-    const handleMove = (ev: PointerEvent) => handleTrackInteraction(ev.clientX);
+    const handleMove = (ev: PointerEvent) => handleTrackInteraction(ev.clientY);
     const handleUp = () => {
       setIsDragging(false);
       document.removeEventListener('pointermove', handleMove);
@@ -39,58 +40,56 @@ export const VolumeSlider = ({ value, onChange, className }: VolumeSliderProps) 
   }, [handleTrackInteraction]);
 
   return (
-    <div className={cn("w-full max-w-sm", className)}>
-      <div className="flex items-center gap-3">
-        {/* Mute button */}
-        <button 
-          onClick={() => onChange(value === 0 ? 0.5 : 0)}
-          className="text-muted-foreground hover:text-primary transition-colors active:scale-90 shrink-0"
+    <div className={cn("flex flex-col items-center gap-2", className)}>
+      {/* Max icon */}
+      <button 
+        onClick={() => onChange(1)}
+        className="text-muted-foreground hover:text-primary transition-colors active:scale-90"
+      >
+        <Volume2 size={16} />
+      </button>
+
+      {/* Vertical track */}
+      <div className="relative h-32">
+        <div 
+          ref={trackRef}
+          className="relative w-10 h-full flex justify-center cursor-pointer touch-none group"
+          onPointerDown={handlePointerDown}
         >
-          <VolumeIcon size={18} />
-        </button>
-        
-        {/* Slider track */}
-        <div className="flex-1 relative">
-          <div 
-            ref={trackRef}
-            className="relative h-10 flex items-center cursor-pointer touch-none group"
-            onPointerDown={handlePointerDown}
-          >
-            {/* Background track */}
-            <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden relative">
-              {/* Fill */}
-              <motion.div
-                className="h-full rounded-full bg-primary"
-                style={{ width: `${percentage}%` }}
-                animate={{ width: `${percentage}%` }}
-                transition={{ duration: 0.05 }}
-              />
-            </div>
-            
-            {/* Thumb */}
-            <motion.div 
-              className={cn(
-                "absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-foreground shadow-md pointer-events-none transition-transform",
-                isDragging && "scale-125"
-              )}
-              style={{ left: `calc(${percentage}% - 8px)` }}
+          {/* Background track */}
+          <div className="w-1.5 h-full bg-muted rounded-full overflow-hidden relative">
+            {/* Fill from bottom */}
+            <motion.div
+              className="absolute bottom-0 left-0 w-full rounded-full bg-primary"
+              style={{ height: `${percentage}%` }}
+              animate={{ height: `${percentage}%` }}
+              transition={{ duration: 0.05 }}
             />
           </div>
+          
+          {/* Thumb */}
+          <motion.div 
+            className={cn(
+              "absolute left-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-foreground shadow-md pointer-events-none transition-transform",
+              isDragging && "scale-125"
+            )}
+            style={{ bottom: `calc(${percentage}% - 8px)` }}
+          />
         </div>
-
-        {/* Percentage */}
-        <span className="text-xs font-semibold text-muted-foreground tabular-nums w-8 text-right shrink-0">
-          {percentage}
-        </span>
-        
-        {/* Max button */}
-        <button 
-          onClick={() => onChange(1)}
-          className="text-muted-foreground hover:text-primary transition-colors active:scale-90 shrink-0"
-        >
-          <Volume2 size={18} />
-        </button>
       </div>
+
+      {/* Percentage */}
+      <span className="text-[10px] font-semibold text-muted-foreground tabular-nums">
+        {percentage}
+      </span>
+
+      {/* Mute icon */}
+      <button 
+        onClick={() => onChange(value === 0 ? 0.5 : 0)}
+        className="text-muted-foreground hover:text-primary transition-colors active:scale-90"
+      >
+        <VolumeIcon size={16} />
+      </button>
     </div>
   );
 };

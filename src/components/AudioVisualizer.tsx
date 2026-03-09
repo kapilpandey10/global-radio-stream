@@ -1,5 +1,6 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
 
 interface AudioVisualizerProps {
   analyser: AnalyserNode | null;
@@ -7,21 +8,58 @@ interface AudioVisualizerProps {
   className?: string;
 }
 
+// CSS-based fallback visualizer for iOS/CORS-restricted streams
+const FallbackVisualizer = ({ isPlaying }: { isPlaying: boolean }) => {
+  const barCount = 32;
+  return (
+    <div className="flex items-end justify-center gap-[2px] h-24 px-2">
+      {Array.from({ length: barCount }).map((_, i) => {
+        const baseDelay = (i / barCount) * 1.2;
+        const height = 20 + Math.sin(i * 0.5) * 15;
+        return (
+          <motion.div
+            key={i}
+            className="w-[3px] rounded-full bg-primary origin-bottom"
+            animate={isPlaying ? {
+              scaleY: [0.15, 0.4 + Math.random() * 0.6, 0.2, 0.5 + Math.random() * 0.5, 0.15],
+              opacity: [0.4, 0.9, 0.5, 1, 0.4],
+            } : {
+              scaleY: 0.08,
+              opacity: 0.2,
+            }}
+            transition={isPlaying ? {
+              repeat: Infinity,
+              duration: 1.2 + Math.random() * 0.8,
+              delay: baseDelay,
+              ease: "easeInOut",
+            } : {
+              duration: 0.5,
+            }}
+            style={{ height: `${height}%` }}
+          />
+        );
+      })}
+    </div>
+  );
+};
+
 export const AudioVisualizer = ({ analyser, isPlaying, className }: AudioVisualizerProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number>();
+  const [hasRealData, setHasRealData] = useState(false);
+  const checkCountRef = useRef(0);
+
+  useEffect(() => {
+    setHasRealData(false);
+    checkCountRef.current = 0;
+  }, [analyser]);
 
   useEffect(() => {
     if (!canvasRef.current || !analyser || !isPlaying) {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
-      // Clear canvas when not playing
+      if (animationRef.current) cancelAnimationFrame(animationRef.current);
       if (canvasRef.current) {
         const ctx = canvasRef.current.getContext("2d");
-        if (ctx) {
-          ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-        }
+        if (ctx) ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
       }
       return;
     }
@@ -30,7 +68,6 @@ export const AudioVisualizer = ({ analyser, isPlaying, className }: AudioVisuali
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Set canvas size
     const dpr = window.devicePixelRatio || 1;
     canvas.width = canvas.offsetWidth * dpr;
     canvas.height = canvas.offsetHeight * dpr;
@@ -38,83 +75,78 @@ export const AudioVisualizer = ({ analyser, isPlaying, className }: AudioVisuali
 
     const bufferLength = analyser.frequencyBinCount;
     const dataArray = new Uint8Array(bufferLength);
-    
-    const centerX = canvas.offsetWidth / 2;
-    const centerY = canvas.offsetHeight / 2;
-    const radius = Math.min(centerX, centerY) * 0.6;
-    const barCount = 64;
+    const barCount = 48;
+    const w = canvas.offsetWidth;
+    const h = canvas.offsetHeight;
 
     const draw = () => {
       if (!isPlaying) return;
-
       animationRef.current = requestAnimationFrame(draw);
       analyser.getByteFrequencyData(dataArray);
 
-      // Clear with fade effect
-      ctx.fillStyle = "rgba(0, 0, 0, 0.15)";
-      ctx.fillRect(0, 0, canvas.offsetWidth, canvas.offsetHeight);
-
-      // Draw circular visualizer
-      for (let i = 0; i < barCount; i++) {
-        const dataIndex = Math.floor((i / barCount) * bufferLength);
-        const amplitude = dataArray[dataIndex] / 255;
-        
-        const angle = (i / barCount) * Math.PI * 2;
-        const barLength = amplitude * radius * 0.8;
-        
-        const x1 = centerX + Math.cos(angle) * radius;
-        const y1 = centerY + Math.sin(angle) * radius;
-        const x2 = centerX + Math.cos(angle) * (radius + barLength);
-        const y2 = centerY + Math.sin(angle) * (radius + barLength);
-
-        // Create gradient for each bar
-        const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
-        gradient.addColorStop(0, `hsla(262, 83%, 58%, ${amplitude * 0.3})`);
-        gradient.addColorStop(0.5, `hsla(262, 83%, 68%, ${amplitude * 0.6})`);
-        gradient.addColorStop(1, `hsla(262, 83%, 78%, ${amplitude})`);
-
-        ctx.strokeStyle = gradient;
-        ctx.lineWidth = 3;
-        ctx.lineCap = "round";
-        ctx.beginPath();
-        ctx.moveTo(x1, y1);
-        ctx.lineTo(x2, y2);
-        ctx.stroke();
+      // Check if we're getting real data (first few frames)
+      if (checkCountRef.current < 30) {
+        checkCountRef.current++;
+        const sum = dataArray.reduce((a, b) => a + b, 0);
+        if (sum > 0) {
+          setHasRealData(true);
+        } else if (checkCountRef.current >= 30) {
+          setHasRealData(false);
+        }
       }
 
-      // Draw glowing center circle
-      const avgAmplitude = dataArray.slice(0, 32).reduce((a, b) => a + b, 0) / 32 / 255;
-      const glowRadius = radius * 0.3 * (1 + avgAmplitude * 0.5);
+      ctx.clearRect(0, 0, w, h);
+
+      const barWidth = (w / barCount) - 2;
       
-      const glowGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, glowRadius);
-      glowGradient.addColorStop(0, `hsla(262, 83%, 68%, ${0.4 + avgAmplitude * 0.3})`);
-      glowGradient.addColorStop(0.5, `hsla(262, 83%, 58%, ${0.2 + avgAmplitude * 0.2})`);
-      glowGradient.addColorStop(1, "hsla(262, 83%, 48%, 0)");
-      
-      ctx.fillStyle = glowGradient;
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, glowRadius, 0, Math.PI * 2);
-      ctx.fill();
+      for (let i = 0; i < barCount; i++) {
+        const dataIndex = Math.floor((i / barCount) * bufferLength * 0.7);
+        const amplitude = dataArray[dataIndex] / 255;
+        const barHeight = Math.max(2, amplitude * h * 0.85);
+        
+        const x = i * (barWidth + 2);
+        const y = h - barHeight;
+
+        // Gradient bar
+        const hue = 262 + (i / barCount) * 30;
+        const gradient = ctx.createLinearGradient(x, h, x, y);
+        gradient.addColorStop(0, `hsla(${hue}, 83%, 58%, 0.3)`);
+        gradient.addColorStop(0.5, `hsla(${hue}, 83%, 63%, ${0.5 + amplitude * 0.4})`);
+        gradient.addColorStop(1, `hsla(${hue}, 83%, 73%, ${amplitude})`);
+
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.roundRect(x, y, barWidth, barHeight, 2);
+        ctx.fill();
+
+        // Top cap glow
+        if (amplitude > 0.1) {
+          ctx.fillStyle = `hsla(${hue}, 83%, 80%, ${amplitude * 0.8})`;
+          ctx.beginPath();
+          ctx.roundRect(x, y - 2, barWidth, 3, 1);
+          ctx.fill();
+        }
+      }
     };
 
     draw();
-
-    return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
-    };
+    return () => { if (animationRef.current) cancelAnimationFrame(animationRef.current); };
   }, [analyser, isPlaying]);
 
+  // Use fallback when no analyser or no real audio data detected
+  const useFallback = !analyser || !hasRealData;
+
   return (
-    <canvas
-      ref={canvasRef}
-      className={cn(
-        "w-full h-32 rounded-xl",
-        !isPlaying && "opacity-30",
-        className
+    <div className={cn("w-full h-24 rounded-xl overflow-hidden", !isPlaying && "opacity-30", className)}>
+      {useFallback ? (
+        <FallbackVisualizer isPlaying={isPlaying} />
+      ) : (
+        <canvas
+          ref={canvasRef}
+          className="w-full h-full"
+          style={{ imageRendering: "auto" }}
+        />
       )}
-      style={{ imageRendering: "auto" }}
-    />
+    </div>
   );
 };

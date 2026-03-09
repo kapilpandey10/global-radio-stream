@@ -56,7 +56,7 @@ export const NowPlaying = () => {
         animate={{ y: 0 }}
         exit={{ y: "100%" }}
         transition={{ type: "spring", damping: 30, stiffness: 280 }}
-        className="fixed inset-0 z-50 flex flex-col bg-background"
+        className="fixed inset-0 z-50 flex flex-col bg-background overflow-hidden"
       >
         {/* Subtle ambient background */}
         <div className="absolute inset-0 bg-gradient-to-b from-muted/50 via-background to-background" />
@@ -70,13 +70,28 @@ export const NowPlaying = () => {
             <ChevronDown size={26} className="text-muted-foreground" />
           </button>
           <div className="flex items-center gap-1.5">
-            <span className={cn(
-              "w-2 h-2 rounded-full",
-              isPlaying ? "bg-primary animate-pulse" : "bg-muted-foreground/40"
-            )} />
-            <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-              {isPlaying ? "Live" : "Paused"}
-            </span>
+            {isLoading ? (
+              <>
+                <Loader2 size={10} className="animate-spin text-primary" />
+                <span className="text-xs font-semibold uppercase tracking-widest text-primary">
+                  Buffering
+                </span>
+              </>
+            ) : isPlaying ? (
+              <>
+                <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                  Live
+                </span>
+              </>
+            ) : (
+              <>
+                <span className="w-2 h-2 rounded-full bg-muted-foreground/40" />
+                <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                  Paused
+                </span>
+              </>
+            )}
           </div>
           <button 
             onClick={() => setShowStationInfo(true)}
@@ -87,8 +102,8 @@ export const NowPlaying = () => {
         </div>
 
         {/* Main content — scrollable */}
-        <div className="relative flex-1 overflow-y-auto scrollbar-hide">
-          <div className="flex flex-col items-center px-8 min-h-full justify-between py-2">
+        <div className="relative flex-1 overflow-y-auto overflow-x-hidden -webkit-overflow-scrolling-touch" style={{ WebkitOverflowScrolling: 'touch' }}>
+          <div className="flex flex-col items-center px-8 py-2" style={{ minHeight: 'min-content' }}>
             
             {/* Top section: Artwork + Info */}
             <div className="flex flex-col items-center w-full max-w-sm gap-6 flex-1 justify-center">
@@ -192,18 +207,28 @@ export const NowPlaying = () => {
                 className="w-full h-16"
               />
 
-              {/* Live progress indicator */}
+              {/* Progress indicator */}
               <div className="w-full">
                 <div className="h-1 bg-muted rounded-full overflow-hidden">
-                  <motion.div
-                    animate={isPlaying ? { x: ["-100%", "100%"] } : {}}
-                    transition={isPlaying ? { repeat: Infinity, duration: 3, ease: "linear" } : {}}
-                    className="h-full w-1/3 bg-gradient-to-r from-transparent via-primary/60 to-transparent"
-                  />
+                  {isLoading ? (
+                    <motion.div
+                      animate={{ x: ["-100%", "100%"] }}
+                      transition={{ repeat: Infinity, duration: 1.2, ease: "easeInOut" }}
+                      className="h-full w-2/3 bg-gradient-to-r from-transparent via-primary to-transparent"
+                    />
+                  ) : isPlaying ? (
+                    <motion.div
+                      animate={{ x: ["-100%", "100%"] }}
+                      transition={{ repeat: Infinity, duration: 3, ease: "linear" }}
+                      className="h-full w-1/3 bg-gradient-to-r from-transparent via-primary/60 to-transparent"
+                    />
+                  ) : (
+                    <div className="h-full w-0" />
+                  )}
                 </div>
                 <div className="flex justify-between mt-1 text-[10px] text-muted-foreground/60 font-medium">
-                  <span>LIVE</span>
-                  <span>{isPlaying ? "Streaming" : "Paused"}</span>
+                  <span>{isLoading ? "CONNECTING" : isPlaying ? "LIVE" : "STOPPED"}</span>
+                  <span>{isLoading ? "Buffering..." : isPlaying ? "Streaming" : "Paused"}</span>
                 </div>
               </div>
 

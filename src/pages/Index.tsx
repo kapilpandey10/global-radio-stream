@@ -186,27 +186,6 @@ const Index = () => {
           </section>
         )}
 
-        {/* Top Stations Widget */}
-        <section className="mt-4 px-5">
-          <WidgetCard title="Top Stations" icon={Star}>
-            {loadingTop ? (
-              <div className="space-y-1">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-[56px] rounded-2xl" />)}</div>
-            ) : (
-              topStations?.map(s => <StationCard key={s.stationuuid} station={s} compact />)
-            )}
-          </WidgetCard>
-        </section>
-
-        {/* Trending Widget */}
-        <section className="mt-4 px-5">
-          <WidgetCard title="Trending Now" icon={TrendingUp}>
-            {loadingTrending ? (
-              <div className="space-y-1">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-[56px] rounded-2xl" />)}</div>
-            ) : (
-              trending?.map(s => <StationCard key={s.stationuuid} station={s} compact />)
-            )}
-          </WidgetCard>
-        </section>
       </div>
 
       <style>{`

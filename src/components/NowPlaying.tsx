@@ -1,12 +1,14 @@
 import { usePlayer } from "@/contexts/PlayerContext";
 import { StationLogo } from "./StationLogo";
 import { SEO } from "./SEO";
-import { Play, Pause, Loader2, ChevronDown, Heart, X, Music2 } from "lucide-react";
+import { Play, Pause, Loader2, ChevronDown, Heart, X, Music2, Share2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { VolumeSlider } from "./VolumeSlider";
 import { StationInfoDialog } from "./StationInfoDialog";
+import { AudioVisualizer } from "./AudioVisualizer";
+import { shareStation } from "@/utils/share";
 
 const SkipIcon = ({ seconds, direction }: { seconds: number; direction: "back" | "forward" }) => (
   <div className="relative flex items-center justify-center w-10 h-10">
@@ -33,7 +35,7 @@ export const NowPlaying = () => {
   const {
     currentStation, isPlaying, isLoading, pause, resume, stop, volume, setVolume,
     showNowPlaying, toggleNowPlaying, toggleFavorite, isFavorite, recentlyPlayed, play, settings, nowPlayingInfo,
-    skipBack, skipForward,
+    skipBack, skipForward, analyserNode,
   } = usePlayer();
   
   const [showStationInfo, setShowStationInfo] = useState(false);
@@ -112,6 +114,13 @@ export const NowPlaying = () => {
               />
             </motion.div>
 
+            {/* Audio Visualizer */}
+            <AudioVisualizer 
+              analyser={analyserNode} 
+              isPlaying={isPlaying}
+              className="w-full max-w-sm"
+            />
+
             {/* Currently Playing Track */}
             <div className="w-full max-w-sm text-center space-y-2">
               {nowPlayingInfo ? (
@@ -167,19 +176,33 @@ export const NowPlaying = () => {
                 <span className="text-sm font-medium">{currentStation.country}</span>
               </div>
 
-              {/* Favorite */}
-              <button
-                onClick={() => toggleFavorite(currentStation)}
-                className="inline-flex items-center gap-1.5 mx-auto"
-              >
-                <Heart size={16} className={cn(
-                  "transition-all",
-                  fav ? "fill-primary text-primary scale-110" : "text-muted-foreground"
-                )} />
-                <span className={cn("text-xs font-semibold", fav ? "text-primary" : "text-muted-foreground")}>
-                  {fav ? "Saved" : "Save"}
-                </span>
-              </button>
+              {/* Favorite & Share */}
+              <div className="flex items-center justify-center gap-3">
+                <button
+                  onClick={() => toggleFavorite(currentStation)}
+                  className="inline-flex items-center gap-1.5"
+                >
+                  <Heart size={16} className={cn(
+                    "transition-all",
+                    fav ? "fill-primary text-primary scale-110" : "text-muted-foreground"
+                  )} />
+                  <span className={cn("text-xs font-semibold", fav ? "text-primary" : "text-muted-foreground")}>
+                    {fav ? "Saved" : "Save"}
+                  </span>
+                </button>
+                
+                <span className="text-muted-foreground/30">·</span>
+                
+                <button
+                  onClick={() => shareStation(currentStation)}
+                  className="inline-flex items-center gap-1.5 hover:text-primary transition-colors"
+                >
+                  <Share2 size={16} className="text-muted-foreground" />
+                  <span className="text-xs font-semibold text-muted-foreground">
+                    Share
+                  </span>
+                </button>
+              </div>
             </div>
 
             {/* Live indicator bar */}

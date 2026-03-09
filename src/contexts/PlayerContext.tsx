@@ -48,6 +48,7 @@ interface PlayerContextType extends PlayerState {
   recentlyPlayed: RadioStation[];
   skipBack: () => void;
   skipForward: () => void;
+  analyserNode: AnalyserNode | null;
 }
 
 const PlayerContext = createContext<PlayerContextType | null>(null);
@@ -63,6 +64,11 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const fallbackAudioRef = useRef<HTMLAudioElement | null>(null);
   const sleepTimerRef = useRef<NodeJS.Timeout | null>(null);
   const usingFallbackRef = useRef(false);
+  
+  // Web Audio API for visualizer
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserNodeRef = useRef<AnalyserNode | null>(null);
+  const sourceNodeRef = useRef<MediaElementAudioSourceNode | null>(null);
 
   const [state, setState] = useState<PlayerState>({
     currentStation: null,
@@ -127,6 +133,35 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     usingFallbackRef.current = false;
   }, []);
 
+  // Setup Web Audio API for visualizer
+  const setupAudioContext = useCallback((audioElement: HTMLAudioElement) => {
+    try {
+      if (!audioContextRef.current) {
+        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+      
+      if (!analyserNodeRef.current) {
+        analyserNodeRef.current = audioContextRef.current.createAnalyser();
+        analyserNodeRef.current.fftSize = 256;
+        analyserNodeRef.current.smoothingTimeConstant = 0.8;
+      }
+
+      // Only create source node once per audio element
+      if (!sourceNodeRef.current) {
+        try {
+          sourceNodeRef.current = audioContextRef.current.createMediaElementSource(audioElement);
+          sourceNodeRef.current.connect(analyserNodeRef.current);
+          analyserNodeRef.current.connect(audioContextRef.current.destination);
+        } catch (err) {
+          // Source already connected or CORS issue - gracefully ignore
+          console.warn('Audio context setup warning:', err);
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to setup audio context (may be CORS restricted):', err);
+    }
+  }, []);
+
   const addToRecent = useCallback((station: RadioStation) => {
     setRecentlyPlayed(prev => {
       const filtered = prev.filter(s => s.stationuuid !== station.stationuuid);
@@ -140,6 +175,11 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const audio = fallbackAudioRef.current;
     audio.src = station.url_resolved || station.url;
     audio.volume = vol;
+    audio.crossOrigin = "anonymous"; // Enable CORS for visualizer
+    
+    // Setup audio context for visualizer
+    setupAudioContext(audio);
+    
     audio.play().then(() => {
       setState(s => ({ ...s, isPlaying: true, isLoading: false }));
     }).catch(() => {
@@ -148,7 +188,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     audio.onplaying = () => setState(s => ({ ...s, isPlaying: true, isLoading: false }));
     audio.onwaiting = () => setState(s => ({ ...s, isLoading: true }));
     audio.onerror = () => setState(s => ({ ...s, isPlaying: false, isLoading: false }));
-  }, []);
+  }, [setupAudioContext]);
 
   const play = useCallback((station: RadioStation) => {
     stopCurrentPlayer();
@@ -188,15 +228,17 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       icecastPlayerRef.current = player;
       
-      // Set volume via audioElement when available
-      const checkAudio = () => {
+      // Set volume and setup audio context when available
+      const checkAudioAndSetup = () => {
         if (player.audioElement) {
           player.audioElement.volume = state.volume;
+          player.audioElement.crossOrigin = "anonymous"; // Enable CORS for visualizer
+          setupAudioContext(player.audioElement);
         }
       };
       
       player.play().then(() => {
-        checkAudio();
+        checkAudioAndSetup();
       }).catch(() => {
         console.warn("IcecastMetadataPlayer play failed, using fallback");
         playWithFallback(station, state.volume);
@@ -205,7 +247,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       console.warn("IcecastMetadataPlayer init failed, using fallback:", e);
       playWithFallback(station, state.volume);
     }
-  }, [state.volume, addToRecent, stopCurrentPlayer, playWithFallback]);
+  }, [state.volume, addToRecent, stopCurrentPlayer, playWithFallback, setupAudioContext]);
 
   const pause = useCallback(() => {
     if (usingFallbackRef.current) {
@@ -318,6 +360,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       ...state, play, pause, resume, stop, setVolume, toggleNowPlaying,
       favorites, toggleFavorite, isFavorite, settings, updateSettings, recentlyPlayed,
       skipBack, skipForward: skipForwardFn,
+      analyserNode: analyserNodeRef.current,
     }}>
       {children}
     </PlayerContext.Provider>

@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { useSearchStations, useCountries } from "@/hooks/useRadioAPI";
 import { StationCard } from "@/components/StationCard";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SEO } from "@/components/SEO";
 import { Search as SearchIcon, X, ChevronDown, Globe, Filter } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";

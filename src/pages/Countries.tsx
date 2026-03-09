@@ -195,6 +195,7 @@ const Countries = () => {
             <p className="text-sm text-white/50">Tuning into the world...</p>
           </div>
         ) : (
+          <Suspense fallback={<div className="text-center"><Loader2 size={40} className="mx-auto text-primary animate-spin mb-3" /><p className="text-sm text-muted-foreground">Loading globe...</p></div>}>
           <Globe3D
             ref={globeRef}
             globeImageUrl="//unpkg.com/three-globe/example/img/earth-night.jpg"

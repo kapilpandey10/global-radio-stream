@@ -6,7 +6,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SEO } from "@/components/SEO";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { MapPin, TrendingUp, Star, ChevronRight, Clock, Radio } from "lucide-react";
+import { MapPin, TrendingUp, Star, ChevronRight, Clock, Radio, Plus } from "lucide-react";
+import { useState, useCallback } from "react";
+import { getAllCustomStations } from "@/data/customStations";
+import { AddStationDialog } from "@/components/AddStationDialog";
 
 const Index = () => {
   const { data: userCountry } = useUserCountry();
@@ -15,6 +18,12 @@ const Index = () => {
   const { data: trending, isLoading: loadingTrending } = useTrendingStations(10);
   const { recentlyPlayed, play } = usePlayer();
   const navigate = useNavigate();
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [customStations, setCustomStations] = useState(getAllCustomStations);
+
+  const refreshCustom = useCallback(() => {
+    setCustomStations(getAllCustomStations());
+  }, []);
 
   return (
     <>

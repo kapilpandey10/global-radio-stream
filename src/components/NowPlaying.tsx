@@ -1,12 +1,14 @@
 import { usePlayer } from "@/contexts/PlayerContext";
 import { StationLogo } from "./StationLogo";
 import { SEO } from "./SEO";
-import { Play, Pause, Loader2, ChevronDown, Heart, X, Music2 } from "lucide-react";
+import { Play, Pause, Loader2, ChevronDown, Heart, X, Music2, Share2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { VolumeSlider } from "./VolumeSlider";
 import { StationInfoDialog } from "./StationInfoDialog";
+import { AudioVisualizer } from "./AudioVisualizer";
+import { shareStation } from "@/utils/share";
 
 const SkipIcon = ({ seconds, direction }: { seconds: number; direction: "back" | "forward" }) => (
   <div className="relative flex items-center justify-center w-10 h-10">

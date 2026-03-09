@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -6,12 +7,14 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { PlayerProvider } from "@/contexts/PlayerContext";
 import { Layout } from "@/components/Layout";
 import Index from "./pages/Index";
-import Search from "./pages/Search";
-import Countries from "./pages/Countries";
-import CountryStations from "./pages/CountryStations";
-import Favorites from "./pages/Favorites";
-import Settings from "./pages/Settings";
-import NotFound from "./pages/NotFound";
+
+// Lazy load non-critical pages
+const Search = lazy(() => import("./pages/Search"));
+const Countries = lazy(() => import("./pages/Countries"));
+const CountryStations = lazy(() => import("./pages/CountryStations"));
+const Favorites = lazy(() => import("./pages/Favorites"));
+const Settings = lazy(() => import("./pages/Settings"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
 

@@ -278,7 +278,7 @@ export const NowPlaying = () => {
             </div>
 
             {/* Volume */}
-            <VolumeKnob value={volume} onChange={setVolume} />
+            <VolumeSlider value={volume} onChange={setVolume} />
 
             <div className="h-6 shrink-0" />
           </div>

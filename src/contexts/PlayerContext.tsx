@@ -360,6 +360,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       ...state, play, pause, resume, stop, setVolume, toggleNowPlaying,
       favorites, toggleFavorite, isFavorite, settings, updateSettings, recentlyPlayed,
       skipBack, skipForward: skipForwardFn,
+      analyserNode: analyserNodeRef.current,
     }}>
       {children}
     </PlayerContext.Provider>

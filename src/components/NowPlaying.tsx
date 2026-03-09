@@ -9,6 +9,7 @@ import { StationInfoDialog } from "./StationInfoDialog";
 import { AudioVisualizer } from "./AudioVisualizer";
 import { shareStation } from "@/utils/share";
 import { VolumeSlider } from "./VolumeSlider";
+import { BannerAd } from "./BannerAd";
 
 const SkipIcon = ({ seconds, direction }: { seconds: number; direction: "back" | "forward" }) => (
   <div className="relative flex items-center justify-center w-8 h-8">
@@ -292,6 +293,9 @@ export const NowPlaying = () => {
 
               {/* Volume — horizontal Apple-style */}
               <VolumeSlider value={volume} onChange={setVolume} />
+
+              {/* Banner Ad */}
+              <BannerAd className="mt-4 rounded-2xl overflow-hidden" />
             </div>
           </div>
         </div>

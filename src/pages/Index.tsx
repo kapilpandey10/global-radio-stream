@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { MapPin, TrendingUp, Star, ChevronRight, Clock, Radio, Play, Pause, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { BannerAd } from "@/components/BannerAd";
 
 const FeaturedCard = ({ station, index }: { station: any; index: number }) => {
   const { currentStation, isPlaying, isLoading, play, pause, resume } = usePlayer();
@@ -143,6 +144,10 @@ const Index = () => {
           </section>
         )}
 
+        {/* Banner Ad */}
+        <section className="mt-4 px-5">
+          <BannerAd className="rounded-2xl overflow-hidden" />
+        </section>
 
         {/* Recently Played */}
         {recentlyPlayed.length > 0 && (

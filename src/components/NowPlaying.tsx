@@ -56,7 +56,7 @@ export const NowPlaying = () => {
         animate={{ y: 0 }}
         exit={{ y: "100%" }}
         transition={{ type: "spring", damping: 30, stiffness: 280 }}
-        className="fixed inset-0 z-50 flex flex-col bg-background"
+        className="fixed inset-0 z-50 flex flex-col bg-background overflow-hidden"
       >
         {/* Subtle ambient background */}
         <div className="absolute inset-0 bg-gradient-to-b from-muted/50 via-background to-background" />

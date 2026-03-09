@@ -93,12 +93,21 @@ export const NowPlaying = () => {
               </>
             )}
           </div>
-          <button 
-            onClick={() => setShowStationInfo(true)}
-            className="p-1.5 -mr-1.5 rounded-full active:scale-90 transition-transform"
-          >
-            <Radio size={20} className="text-muted-foreground" />
-          </button>
+          <div className="flex items-center gap-1">
+            <button 
+              onClick={() => setShowStationInfo(true)}
+              className="p-1.5 rounded-full active:scale-90 transition-transform"
+            >
+              <Radio size={20} className="text-muted-foreground" />
+            </button>
+            <button 
+              onClick={() => { stop(); }}
+              className="p-1.5 -mr-1.5 rounded-full active:scale-90 transition-transform"
+              title="Close player"
+            >
+              <X size={20} className="text-muted-foreground" />
+            </button>
+          </div>
         </div>
 
         {/* Main content — scrollable */}

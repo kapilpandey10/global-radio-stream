@@ -8,9 +8,6 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { MapPin, TrendingUp, Star, ChevronRight, Clock, Radio, Play, Pause, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { lazy, Suspense } from "react";
-
-const VideoAdWidget = lazy(() => import("@/components/VideoAdWidget"));
 
 const FeaturedCard = ({ station, index }: { station: any; index: number }) => {
   const { currentStation, isPlaying, isLoading, play, pause, resume } = usePlayer();

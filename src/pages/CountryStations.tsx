@@ -2,6 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useStationsByCountry } from "@/hooks/useRadioAPI";
 import { StationCard } from "@/components/StationCard";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SEO } from "@/components/SEO";
 import { ChevronLeft } from "lucide-react";
 
 const CountryStations = () => {
@@ -11,7 +12,13 @@ const CountryStations = () => {
   const countryName = stations?.[0]?.country || code;
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <>
+      <SEO 
+        title={`${countryName} Radio Stations - Live Streaming | Mero Radio`}
+        description={`Listen to ${stations?.length || 'hundreds of'} live radio stations from ${countryName}. Stream local music, news, talk shows, and more. Free online radio from ${countryName}.`}
+        path={`/countries/${code}`}
+      />
+      <div className="max-w-2xl mx-auto">
       <div className="px-5 pt-14 pb-2 flex items-center gap-2">
         <button onClick={() => navigate("/countries")} className="p-1 -ml-1 active:scale-90 transition-transform">
           <ChevronLeft size={28} className="text-primary" />

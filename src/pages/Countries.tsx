@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useGeoStations, useNearbyStations } from "@/hooks/useRadioAPI";
+import { SEO } from "@/components/SEO";
 import { Search, MapPin, Radio, X, Play, ChevronRight, Loader2, Plus, Minus, Navigation } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";

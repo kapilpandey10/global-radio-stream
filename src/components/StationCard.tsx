@@ -71,7 +71,14 @@ export const StationCard = ({ station, compact }: StationCardProps) => {
         </div>
       </div>
 
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-0.5">
+        <button
+          onClick={(e) => { e.stopPropagation(); shareStation(station); }}
+          className="p-2 rounded-full transition-colors active:scale-90 hover:bg-muted"
+          title="Share station"
+        >
+          <Share2 size={15} className="text-muted-foreground/40" />
+        </button>
         <button
           onClick={(e) => { e.stopPropagation(); toggleFavorite(station); }}
           className="p-2 rounded-full transition-colors active:scale-90"

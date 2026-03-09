@@ -176,19 +176,33 @@ export const NowPlaying = () => {
                 <span className="text-sm font-medium">{currentStation.country}</span>
               </div>
 
-              {/* Favorite */}
-              <button
-                onClick={() => toggleFavorite(currentStation)}
-                className="inline-flex items-center gap-1.5 mx-auto"
-              >
-                <Heart size={16} className={cn(
-                  "transition-all",
-                  fav ? "fill-primary text-primary scale-110" : "text-muted-foreground"
-                )} />
-                <span className={cn("text-xs font-semibold", fav ? "text-primary" : "text-muted-foreground")}>
-                  {fav ? "Saved" : "Save"}
-                </span>
-              </button>
+              {/* Favorite & Share */}
+              <div className="flex items-center justify-center gap-3">
+                <button
+                  onClick={() => toggleFavorite(currentStation)}
+                  className="inline-flex items-center gap-1.5"
+                >
+                  <Heart size={16} className={cn(
+                    "transition-all",
+                    fav ? "fill-primary text-primary scale-110" : "text-muted-foreground"
+                  )} />
+                  <span className={cn("text-xs font-semibold", fav ? "text-primary" : "text-muted-foreground")}>
+                    {fav ? "Saved" : "Save"}
+                  </span>
+                </button>
+                
+                <span className="text-muted-foreground/30">·</span>
+                
+                <button
+                  onClick={() => shareStation(currentStation)}
+                  className="inline-flex items-center gap-1.5 hover:text-primary transition-colors"
+                >
+                  <Share2 size={16} className="text-muted-foreground" />
+                  <span className="text-xs font-semibold text-muted-foreground">
+                    Share
+                  </span>
+                </button>
+              </div>
             </div>
 
             {/* Live indicator bar */}

@@ -48,6 +48,7 @@ interface PlayerContextType extends PlayerState {
   recentlyPlayed: RadioStation[];
   skipBack: () => void;
   skipForward: () => void;
+  analyserNode: AnalyserNode | null;
 }
 
 const PlayerContext = createContext<PlayerContextType | null>(null);

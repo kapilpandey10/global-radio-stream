@@ -6,10 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SEO } from "@/components/SEO";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { MapPin, TrendingUp, Star, ChevronRight, Clock, Radio, Plus } from "lucide-react";
-import { useState, useCallback } from "react";
-import { getAllCustomStations } from "@/data/customStations";
-import { AddStationDialog } from "@/components/AddStationDialog";
+import { MapPin, TrendingUp, Star, ChevronRight, Clock, Radio } from "lucide-react";
 
 const Index = () => {
   const { data: userCountry } = useUserCountry();
@@ -18,12 +15,6 @@ const Index = () => {
   const { data: trending, isLoading: loadingTrending } = useTrendingStations(10);
   const { recentlyPlayed, play } = usePlayer();
   const navigate = useNavigate();
-  const [showAddDialog, setShowAddDialog] = useState(false);
-  const [customStations, setCustomStations] = useState(getAllCustomStations);
-
-  const refreshCustom = useCallback(() => {
-    setCustomStations(getAllCustomStations());
-  }, []);
 
   return (
     <>
@@ -75,33 +66,6 @@ const Index = () => {
         </section>
       )}
 
-      {/* Custom Stations */}
-      <section className="mt-6">
-        <div className="flex items-center justify-between px-5 mb-1">
-          <h2 className="text-base font-bold flex items-center gap-2 text-foreground">
-            <Radio size={16} className="text-primary" /> Custom Stations
-          </h2>
-          <button
-            onClick={() => setShowAddDialog(true)}
-            className="text-primary text-sm font-semibold flex items-center gap-1 active:opacity-60"
-          >
-            <Plus size={16} /> Add
-          </button>
-        </div>
-        <div className="px-4">
-          {customStations.length === 0 ? (
-            <button
-              onClick={() => setShowAddDialog(true)}
-              className="w-full py-6 border border-dashed border-border rounded-xl flex flex-col items-center gap-2 text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"
-            >
-              <Plus size={24} />
-              <span className="text-sm font-medium">Add your own radio station</span>
-            </button>
-          ) : (
-            customStations.map(s => <StationCard key={s.stationuuid} station={s} />)
-          )}
-        </div>
-      </section>
       {/* Local Stations */}
       {userCountry && (
         <section className="mt-6">
@@ -158,7 +122,6 @@ const Index = () => {
         </div>
       </section>
     </div>
-    <AddStationDialog open={showAddDialog} onOpenChange={setShowAddDialog} onAdded={refreshCustom} />
     </>
   );
 };

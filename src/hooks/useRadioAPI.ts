@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { RadioStation, Country } from "@/types/radio";
+import { getAllCustomStations } from "@/data/customStations";
 
 const BASE = "https://de1.api.radio-browser.info/json";
 
@@ -26,13 +27,28 @@ export const useTrendingStations = (limit = 20) =>
 export const useSearchStations = (query: string, filters?: { country?: string; tag?: string; language?: string }) =>
   useQuery<RadioStation[]>({
     queryKey: ["search-stations", query, filters],
-    queryFn: () => {
+    queryFn: async () => {
       const params = new URLSearchParams({ limit: "50", order: "clickcount", reverse: "true" });
       if (query) params.set("name", query);
       if (filters?.country) params.set("country", filters.country);
       if (filters?.tag) params.set("tag", filters.tag);
       if (filters?.language) params.set("language", filters.language);
-      return fetchJSON(`/stations/search?${params}`);
+      
+      const apiResults = await fetchJSON<RadioStation[]>(`/stations/search?${params}`);
+      
+      // Get custom stations that match the filters
+      const customStations = getAllCustomStations().filter(station => {
+        const matchesQuery = !query || station.name.toLowerCase().includes(query.toLowerCase());
+        const matchesCountry = !filters?.country || station.country.toLowerCase() === filters.country.toLowerCase();
+        const matchesTag = !filters?.tag || station.tags.toLowerCase().includes(filters.tag.toLowerCase());
+        return matchesQuery && matchesCountry && matchesTag;
+      });
+      
+      // Merge custom stations at the top, avoiding duplicates
+      const apiIds = new Set(apiResults.map(s => s.url_resolved || s.url));
+      const uniqueCustom = customStations.filter(s => !apiIds.has(s.url_resolved || s.url));
+      
+      return [...uniqueCustom, ...apiResults];
     },
     enabled: !!(query || filters?.country || filters?.tag || filters?.language),
     staleTime: 2 * 60 * 1000,
@@ -59,7 +75,20 @@ export const useStationsByCountry = (countryCode: string) =>
 export const useLocalStations = (countryCode: string | null) =>
   useQuery<RadioStation[]>({
     queryKey: ["local-stations", countryCode],
-    queryFn: () => fetchJSON(`/stations/bycountrycodeexact/${countryCode}?order=clickcount&reverse=true&limit=30`),
+    queryFn: async () => {
+      const apiResults = await fetchJSON<RadioStation[]>(`/stations/bycountrycodeexact/${countryCode}?order=clickcount&reverse=true&limit=30`);
+      
+      // Get custom stations matching the country code
+      const customStations = getAllCustomStations().filter(
+        s => s.countrycode.toLowerCase() === countryCode?.toLowerCase()
+      );
+      
+      // Merge custom stations at the top
+      const apiIds = new Set(apiResults.map(s => s.url_resolved || s.url));
+      const uniqueCustom = customStations.filter(s => !apiIds.has(s.url_resolved || s.url));
+      
+      return [...uniqueCustom, ...apiResults];
+    },
     enabled: !!countryCode,
     staleTime: 5 * 60 * 1000,
   });

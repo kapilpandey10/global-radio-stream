@@ -5,7 +5,7 @@ import { Play, Pause, Loader2, ChevronDown, Heart, X, Music2, Share2 } from "luc
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
-import { VolumeKnob } from "./VolumeKnob";
+import { VolumeSlider } from "./VolumeSlider";
 import { StationInfoDialog } from "./StationInfoDialog";
 import { AudioVisualizer } from "./AudioVisualizer";
 import { shareStation } from "@/utils/share";

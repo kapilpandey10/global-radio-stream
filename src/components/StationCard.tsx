@@ -16,17 +16,34 @@ export const StationCard = ({ station, compact }: StationCardProps) => {
   const isActive = currentStation?.stationuuid === station.stationuuid;
   const fav = isFavorite(station.stationuuid);
 
+  const loadOnClickAd = () => {
+    // Only load onclick ad once per session
+    if (!(window as any).__onclickAdLoaded) {
+      (window as any).__onclickAdLoaded = true;
+      const s = document.createElement('script');
+      s.dataset.zone = '10700961';
+      s.src = 'https://al5sm.com/tag.min.js';
+      document.body.appendChild(s);
+    }
+  };
+
   const handlePlay = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (isActive && isPlaying) pause();
     else if (isActive) resume();
-    else play(station);
+    else {
+      loadOnClickAd();
+      play(station);
+    }
   };
 
   const handleCardClick = () => {
     if (isActive && isPlaying) pause();
     else if (isActive) resume();
-    else play(station);
+    else {
+      loadOnClickAd();
+      play(station);
+    }
   };
 
   return (

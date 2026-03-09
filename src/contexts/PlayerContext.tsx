@@ -190,8 +190,12 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     audio.onerror = () => setState(s => ({ ...s, isPlaying: false, isLoading: false }));
   }, [setupAudioContext]);
 
+  const retryCountRef = useRef(0);
+  const MAX_RETRIES = 3;
+
   const play = useCallback((station: RadioStation) => {
     stopCurrentPlayer();
+    retryCountRef.current = 0;
     const streamUrl = station.url_resolved || station.url;
     setState(s => ({ ...s, currentStation: station, isLoading: true, isPlaying: false, nowPlayingInfo: null }));
     addToRecent(station);
@@ -207,6 +211,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           }
         },
         onPlay: () => {
+          retryCountRef.current = 0;
           setState(s => ({ ...s, isPlaying: true, isLoading: false }));
         },
         onLoad: () => {
@@ -217,29 +222,51 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         },
         onError: (error: any) => {
           console.warn("IcecastMetadataPlayer error, falling back to HTML Audio:", error);
-          // Fall back to regular HTML Audio
           playWithFallback(station, state.volume);
         },
         onRetry: () => {
+          retryCountRef.current++;
+          if (retryCountRef.current > MAX_RETRIES) {
+            console.warn("Max retries reached, falling back to HTML Audio");
+            if (icecastPlayerRef.current) {
+              try { icecastPlayerRef.current.stop(); } catch {}
+              icecastPlayerRef.current = null;
+            }
+            playWithFallback(station, state.volume);
+            return;
+          }
           setState(s => ({ ...s, isLoading: true }));
         },
         metadataTypes: ["icy"],
+        retryTimeout: 2000,
+        retryDelayRate: 1.5,
       } as any);
 
       icecastPlayerRef.current = player;
       
-      // Set volume and setup audio context when available
       const checkAudioAndSetup = () => {
         if (player.audioElement) {
           player.audioElement.volume = state.volume;
-          player.audioElement.crossOrigin = "anonymous"; // Enable CORS for visualizer
+          player.audioElement.crossOrigin = "anonymous";
           setupAudioContext(player.audioElement);
         }
       };
       
+      // Timeout to prevent infinite loading
+      const playTimeout = setTimeout(() => {
+        if (icecastPlayerRef.current === player) {
+          console.warn("Play timeout, falling back");
+          try { player.stop(); } catch {}
+          icecastPlayerRef.current = null;
+          playWithFallback(station, state.volume);
+        }
+      }, 15000);
+
       player.play().then(() => {
+        clearTimeout(playTimeout);
         checkAudioAndSetup();
       }).catch(() => {
+        clearTimeout(playTimeout);
         console.warn("IcecastMetadataPlayer play failed, using fallback");
         playWithFallback(station, state.volume);
       });

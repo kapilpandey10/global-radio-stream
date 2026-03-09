@@ -1,5 +1,6 @@
 import { usePlayer } from "@/contexts/PlayerContext";
 import { StationCard } from "@/components/StationCard";
+import { SEO } from "@/components/SEO";
 import { Heart } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -7,7 +8,13 @@ const Favorites = () => {
   const { favorites } = usePlayer();
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <>
+      <SEO 
+        title="Your Favorite Radio Stations | Mero Radio"
+        description="Access your saved favorite radio stations. Quickly play your most-loved stations from around the world."
+        path="/favorites"
+      />
+      <div className="max-w-2xl mx-auto">
       <div className="px-5 pt-14 pb-2">
         <h1 className="text-3xl font-bold text-foreground tracking-tight">Library</h1>
       </div>
@@ -26,7 +33,8 @@ const Favorites = () => {
           ))}
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 };
 

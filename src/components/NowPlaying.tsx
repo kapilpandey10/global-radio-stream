@@ -1,5 +1,6 @@
 import { usePlayer } from "@/contexts/PlayerContext";
 import { StationLogo } from "./StationLogo";
+import { SEO } from "./SEO";
 import { Play, Pause, Loader2, ChevronDown, Heart, X, Music2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -46,6 +47,7 @@ export const NowPlaying = () => {
 
   return (
     <AnimatePresence>
+      <SEO station={currentStation} path={`/station/${currentStation.stationuuid}`} />
       <motion.div
         initial={{ y: "100%" }}
         animate={{ y: 0 }}

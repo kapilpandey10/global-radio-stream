@@ -146,6 +146,13 @@ const Index = () => {
           </section>
         )}
 
+        {/* Video Ad */}
+        <section className="mt-5 px-5">
+          <Suspense fallback={null}>
+            <VideoAdWidget />
+          </Suspense>
+        </section>
+
         {/* Recently Played */}
         {recentlyPlayed.length > 0 && (
           <section className="mt-5 px-5">

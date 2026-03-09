@@ -1,7 +1,7 @@
 import { usePlayer } from "@/contexts/PlayerContext";
 import { StationLogo } from "./StationLogo";
 import { SEO } from "./SEO";
-import { Play, Pause, Loader2, ChevronDown, Heart, Share2, Radio } from "lucide-react";
+import { Play, Pause, Loader2, ChevronDown, Heart, Share2, Radio, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useState } from "react";

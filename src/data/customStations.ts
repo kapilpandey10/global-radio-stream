@@ -39,8 +39,7 @@ const makeStation = (
 
 // Add your preset custom stations here
 export const PRESET_CUSTOM_STATIONS: RadioStation[] = [
-  // Example — replace/add your own:
-  // makeStation("my-station-1", "My Custom Radio", "https://stream.example.com/live", "Nepal", "NP", "https://example.com/logo.png", "music,custom", 128),
+  makeStation("afno-fm-okhaldhunga", "Afno FM (Okhaldhunga)", "https://streaming.softnep.net:10969/;stream.nsv&type=mp3&volume=70", "Nepal", "NP", "https://okhaldhunga.afnofm.org/themes/okhaldhunga/images/logo.png", "nepal,local,fm", 128),
 ];
 
 // localStorage-backed user-added stations

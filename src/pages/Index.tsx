@@ -3,6 +3,7 @@ import { usePlayer } from "@/contexts/PlayerContext";
 import { StationCard } from "@/components/StationCard";
 import { StationLogo } from "@/components/StationLogo";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SEO } from "@/components/SEO";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { MapPin, TrendingUp, Star, ChevronRight, Clock, Radio } from "lucide-react";
@@ -16,6 +17,8 @@ const Index = () => {
   const navigate = useNavigate();
 
   return (
+    <>
+      <SEO path="/" />
     <div className="max-w-2xl mx-auto">
       {/* Hero Header */}
       <div className="px-5 pt-14 pb-4">

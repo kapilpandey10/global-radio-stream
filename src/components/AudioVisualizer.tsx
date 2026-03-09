@@ -16,6 +16,13 @@ export const AudioVisualizer = ({ analyser, isPlaying, className }: AudioVisuali
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
       }
+      // Clear canvas when not playing
+      if (canvasRef.current) {
+        const ctx = canvasRef.current.getContext("2d");
+        if (ctx) {
+          ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+        }
+      }
       return;
     }
 
@@ -31,8 +38,11 @@ export const AudioVisualizer = ({ analyser, isPlaying, className }: AudioVisuali
 
     const bufferLength = analyser.frequencyBinCount;
     const dataArray = new Uint8Array(bufferLength);
-    const barCount = 32; // Number of bars to display
-    const barWidth = canvas.offsetWidth / barCount;
+    
+    const centerX = canvas.offsetWidth / 2;
+    const centerY = canvas.offsetHeight / 2;
+    const radius = Math.min(centerX, centerY) * 0.6;
+    const barCount = 64;
 
     const draw = () => {
       if (!isPlaying) return;
@@ -40,26 +50,51 @@ export const AudioVisualizer = ({ analyser, isPlaying, className }: AudioVisuali
       animationRef.current = requestAnimationFrame(draw);
       analyser.getByteFrequencyData(dataArray);
 
-      // Clear canvas with fade effect
-      ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
+      // Clear with fade effect
+      ctx.fillStyle = "rgba(0, 0, 0, 0.15)";
       ctx.fillRect(0, 0, canvas.offsetWidth, canvas.offsetHeight);
 
-      // Draw bars
+      // Draw circular visualizer
       for (let i = 0; i < barCount; i++) {
         const dataIndex = Math.floor((i / barCount) * bufferLength);
-        const barHeight = (dataArray[dataIndex] / 255) * canvas.offsetHeight * 0.8;
-        const x = i * barWidth;
-        const y = canvas.offsetHeight - barHeight;
+        const amplitude = dataArray[dataIndex] / 255;
+        
+        const angle = (i / barCount) * Math.PI * 2;
+        const barLength = amplitude * radius * 0.8;
+        
+        const x1 = centerX + Math.cos(angle) * radius;
+        const y1 = centerY + Math.sin(angle) * radius;
+        const x2 = centerX + Math.cos(angle) * (radius + barLength);
+        const y2 = centerY + Math.sin(angle) * (radius + barLength);
 
-        // Create gradient for each bar (purple theme)
-        const gradient = ctx.createLinearGradient(x, y, x, canvas.offsetHeight);
-        gradient.addColorStop(0, "hsl(262, 83%, 58%)"); // primary
-        gradient.addColorStop(0.5, "hsl(262, 83%, 68%)");
-        gradient.addColorStop(1, "hsl(262, 83%, 78%)");
+        // Create gradient for each bar
+        const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
+        gradient.addColorStop(0, `hsla(262, 83%, 58%, ${amplitude * 0.3})`);
+        gradient.addColorStop(0.5, `hsla(262, 83%, 68%, ${amplitude * 0.6})`);
+        gradient.addColorStop(1, `hsla(262, 83%, 78%, ${amplitude})`);
 
-        ctx.fillStyle = gradient;
-        ctx.fillRect(x + 1, y, barWidth - 2, barHeight);
+        ctx.strokeStyle = gradient;
+        ctx.lineWidth = 3;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
       }
+
+      // Draw glowing center circle
+      const avgAmplitude = dataArray.slice(0, 32).reduce((a, b) => a + b, 0) / 32 / 255;
+      const glowRadius = radius * 0.3 * (1 + avgAmplitude * 0.5);
+      
+      const glowGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, glowRadius);
+      glowGradient.addColorStop(0, `hsla(262, 83%, 68%, ${0.4 + avgAmplitude * 0.3})`);
+      glowGradient.addColorStop(0.5, `hsla(262, 83%, 58%, ${0.2 + avgAmplitude * 0.2})`);
+      glowGradient.addColorStop(1, "hsla(262, 83%, 48%, 0)");
+      
+      ctx.fillStyle = glowGradient;
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, glowRadius, 0, Math.PI * 2);
+      ctx.fill();
     };
 
     draw();
@@ -75,11 +110,11 @@ export const AudioVisualizer = ({ analyser, isPlaying, className }: AudioVisuali
     <canvas
       ref={canvasRef}
       className={cn(
-        "w-full h-24 rounded-xl opacity-80",
+        "w-full h-32 rounded-xl",
         !isPlaying && "opacity-30",
         className
       )}
-      style={{ imageRendering: "crisp-edges" }}
+      style={{ imageRendering: "auto" }}
     />
   );
 };

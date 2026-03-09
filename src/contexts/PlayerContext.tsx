@@ -133,6 +133,35 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     usingFallbackRef.current = false;
   }, []);
 
+  // Setup Web Audio API for visualizer
+  const setupAudioContext = useCallback((audioElement: HTMLAudioElement) => {
+    try {
+      if (!audioContextRef.current) {
+        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+      
+      if (!analyserNodeRef.current) {
+        analyserNodeRef.current = audioContextRef.current.createAnalyser();
+        analyserNodeRef.current.fftSize = 256;
+        analyserNodeRef.current.smoothingTimeConstant = 0.8;
+      }
+
+      // Only create source node once per audio element
+      if (!sourceNodeRef.current) {
+        try {
+          sourceNodeRef.current = audioContextRef.current.createMediaElementSource(audioElement);
+          sourceNodeRef.current.connect(analyserNodeRef.current);
+          analyserNodeRef.current.connect(audioContextRef.current.destination);
+        } catch (err) {
+          // Source already connected or CORS issue - gracefully ignore
+          console.warn('Audio context setup warning:', err);
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to setup audio context (may be CORS restricted):', err);
+    }
+  }, []);
+
   const addToRecent = useCallback((station: RadioStation) => {
     setRecentlyPlayed(prev => {
       const filtered = prev.filter(s => s.stationuuid !== station.stationuuid);

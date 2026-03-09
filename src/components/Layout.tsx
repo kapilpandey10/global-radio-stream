@@ -2,6 +2,7 @@ import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Home, Search, Globe, Heart, Settings } from "lucide-react";
 import { MiniPlayer } from "./MiniPlayer";
 import { NowPlaying } from "./NowPlaying";
+import { InstallPrompt } from "./InstallPrompt";
 import { cn } from "@/lib/utils";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { motion } from "framer-motion";
@@ -27,6 +28,7 @@ export const Layout = () => {
 
       <MiniPlayer />
       <NowPlaying />
+      <InstallPrompt />
 
       {/* Tab bar */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-xl border-t border-border/50">

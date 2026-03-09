@@ -114,6 +114,13 @@ export const NowPlaying = () => {
               />
             </motion.div>
 
+            {/* Audio Visualizer */}
+            <AudioVisualizer 
+              analyser={analyserNode} 
+              isPlaying={isPlaying}
+              className="w-full max-w-sm"
+            />
+
             {/* Currently Playing Track */}
             <div className="w-full max-w-sm text-center space-y-2">
               {nowPlayingInfo ? (

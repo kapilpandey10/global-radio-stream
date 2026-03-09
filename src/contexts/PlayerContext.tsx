@@ -64,6 +64,11 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const fallbackAudioRef = useRef<HTMLAudioElement | null>(null);
   const sleepTimerRef = useRef<NodeJS.Timeout | null>(null);
   const usingFallbackRef = useRef(false);
+  
+  // Web Audio API for visualizer
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserNodeRef = useRef<AnalyserNode | null>(null);
+  const sourceNodeRef = useRef<MediaElementAudioSourceNode | null>(null);
 
   const [state, setState] = useState<PlayerState>({
     currentStation: null,

@@ -223,6 +223,7 @@ const Countries = () => {
             atmosphereColor="#22c55e"
             atmosphereAltitude={0.15}
           />
+          </Suspense>
         )}
       </div>
 

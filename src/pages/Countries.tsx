@@ -180,7 +180,13 @@ const Countries = () => {
   };
 
   return (
-    <div className="fixed inset-0 bg-[#0a0e17] flex flex-col" style={{ bottom: "60px" }}>
+    <>
+      <SEO 
+        title="Explore Radio Stations Worldwide on 3D Globe | Mero Radio"
+        description="Discover 30,000+ radio stations on an interactive 3D globe. Click any location to find nearby stations. Explore live radio from every country in the world."
+        path="/countries"
+      />
+      <div className="fixed inset-0 bg-[#0a0e17] flex flex-col" style={{ bottom: "60px" }}>
       {/* Globe fills the entire view */}
       <div ref={containerRef} className="absolute inset-0 flex items-center justify-center">
         {isLoading ? (

@@ -1,9 +1,10 @@
 import { RadioStation } from "@/types/radio";
 import { StationLogo } from "./StationLogo";
 import { usePlayer } from "@/contexts/PlayerContext";
-import { Heart, Play, Pause, Loader2 } from "lucide-react";
+import { Heart, Play, Pause, Loader2, Share2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { shareStation } from "@/utils/share";
 
 interface StationCardProps {
   station: RadioStation;

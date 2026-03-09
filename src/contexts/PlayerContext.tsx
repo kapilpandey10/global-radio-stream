@@ -175,6 +175,11 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const audio = fallbackAudioRef.current;
     audio.src = station.url_resolved || station.url;
     audio.volume = vol;
+    audio.crossOrigin = "anonymous"; // Enable CORS for visualizer
+    
+    // Setup audio context for visualizer
+    setupAudioContext(audio);
+    
     audio.play().then(() => {
       setState(s => ({ ...s, isPlaying: true, isLoading: false }));
     }).catch(() => {
@@ -183,7 +188,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     audio.onplaying = () => setState(s => ({ ...s, isPlaying: true, isLoading: false }));
     audio.onwaiting = () => setState(s => ({ ...s, isLoading: true }));
     audio.onerror = () => setState(s => ({ ...s, isPlaying: false, isLoading: false }));
-  }, []);
+  }, [setupAudioContext]);
 
   const play = useCallback((station: RadioStation) => {
     stopCurrentPlayer();

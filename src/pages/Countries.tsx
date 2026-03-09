@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback, lazy, Suspense } from "react";
 import { useGeoStations, useNearbyStations } from "@/hooks/useRadioAPI";
 import { SEO } from "@/components/SEO";
 import { Search, MapPin, Radio, X, Play, ChevronRight, Loader2, Plus, Minus, Navigation } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import Globe3D from "react-globe.gl";
+const Globe3D = lazy(() => import("react-globe.gl"));
 import { usePlayer } from "@/contexts/PlayerContext";
 import { RadioStation } from "@/types/radio";
 import { StationLogo } from "@/components/StationLogo";
@@ -195,6 +195,7 @@ const Countries = () => {
             <p className="text-sm text-white/50">Tuning into the world...</p>
           </div>
         ) : (
+          <Suspense fallback={<div className="text-center"><Loader2 size={40} className="mx-auto text-primary animate-spin mb-3" /><p className="text-sm text-muted-foreground">Loading globe...</p></div>}>
           <Globe3D
             ref={globeRef}
             globeImageUrl="//unpkg.com/three-globe/example/img/earth-night.jpg"
@@ -222,6 +223,7 @@ const Countries = () => {
             atmosphereColor="#22c55e"
             atmosphereAltitude={0.15}
           />
+          </Suspense>
         )}
       </div>
 

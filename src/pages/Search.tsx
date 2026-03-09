@@ -34,7 +34,13 @@ const Search = () => {
   const selectedCountryName = countries?.find(c => c.name === selectedCountry)?.name;
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <>
+      <SEO 
+        title="Search Radio Stations - Mero Radio"
+        description="Search through 30,000+ live radio stations worldwide. Filter by country, genre, language, or station name. Find your favorite radio stations."
+        path="/search"
+      />
+      <div className="max-w-2xl mx-auto">
       <div className="px-5 pt-14 pb-2">
         <h1 className="text-3xl font-bold text-foreground tracking-tight">Search</h1>
       </div>

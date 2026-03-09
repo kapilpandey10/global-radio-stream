@@ -228,15 +228,17 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       icecastPlayerRef.current = player;
       
-      // Set volume via audioElement when available
-      const checkAudio = () => {
+      // Set volume and setup audio context when available
+      const checkAudioAndSetup = () => {
         if (player.audioElement) {
           player.audioElement.volume = state.volume;
+          player.audioElement.crossOrigin = "anonymous"; // Enable CORS for visualizer
+          setupAudioContext(player.audioElement);
         }
       };
       
       player.play().then(() => {
-        checkAudio();
+        checkAudioAndSetup();
       }).catch(() => {
         console.warn("IcecastMetadataPlayer play failed, using fallback");
         playWithFallback(station, state.volume);
@@ -245,7 +247,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       console.warn("IcecastMetadataPlayer init failed, using fallback:", e);
       playWithFallback(station, state.volume);
     }
-  }, [state.volume, addToRecent, stopCurrentPlayer, playWithFallback]);
+  }, [state.volume, addToRecent, stopCurrentPlayer, playWithFallback, setupAudioContext]);
 
   const pause = useCallback(() => {
     if (usingFallbackRef.current) {

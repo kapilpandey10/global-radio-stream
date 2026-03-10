@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SEO } from "@/components/SEO";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { MapPin, TrendingUp, Star, ChevronRight, Clock, Radio, Play, Pause, Loader2, Sparkles, Globe } from "lucide-react";
+import { MapPin, TrendingUp, Star, ChevronRight, Clock, Radio, Play, Pause, Loader2, Sparkles, Globe, Music, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BannerAd } from "@/components/BannerAd";
 

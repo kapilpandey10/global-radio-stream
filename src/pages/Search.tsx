@@ -2,9 +2,10 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useSearchStations, useCountries } from "@/hooks/useRadioAPI";
 import { StationCard } from "@/components/StationCard";
+import { CategoryDiscovery } from "@/components/CategoryDiscovery";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SEO } from "@/components/SEO";
-import { Search as SearchIcon, X, ChevronDown, Globe, Filter } from "lucide-react";
+import { Search as SearchIcon, X, ChevronDown, Globe, Filter, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -20,7 +21,6 @@ const Search = () => {
 
   // Banner Initialization
   useEffect(() => {
-    // Check if the external script is loaded on the window object
     if (window.aclib && typeof window.aclib.runBanner === 'function') {
       window.aclib.runBanner({
         zoneId: '11051154',
@@ -43,6 +43,10 @@ const Search = () => {
 
   const selectedCountryName = countries?.find(c => c.name === selectedCountry)?.name;
 
+  const handleCategorySelect = (genre: string) => {
+    setQuery(genre);
+  };
+
   return (
     <>
       <SEO 
@@ -50,21 +54,9 @@ const Search = () => {
         description="Search through 30,000+ live radio stations worldwide. Filter by country, genre, language, or station name. Find your favorite radio stations."
         path="/search"
       />
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-2xl mx-auto pb-24">
         <div className="px-5 pt-14 pb-2">
           <h1 className="text-3xl font-bold text-foreground tracking-tight">Search</h1>
-        </div>
-
-        {/* --- Ads Banner Section --- */}
-        <div className="px-5 my-4">
-          <div 
-            className="w-full min-h-[100px] flex items-center justify-center bg-muted/20 rounded-2xl border border-dashed border-border/50"
-          >
-            {/* Note: The aclib script usually looks for a specific container 
-                or appends to the location where it was called. 
-            */}
-            <div id="ad-zone-11051154"></div>
-          </div>
         </div>
 
         {/* Search input */}
@@ -167,22 +159,54 @@ const Search = () => {
           )}
         </AnimatePresence>
 
-        {/* Results */}
-        <div className="px-4 mt-4 pb-4">
-          {isLoading ? Array.from({ length: 8 }).map((_, i) => (
-            <Skeleton key={i} className="h-[60px] rounded-xl mb-1" />
-          )) : !debouncedQuery && !selectedCountry ? (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-20">
-              <SearchIcon size={40} className="mx-auto mb-3 text-muted-foreground/20" />
-              <p className="text-sm text-muted-foreground">Search or filter by country</p>
-            </motion.div>
+        {/* Content Section */}
+        <div className="mt-4">
+          {isLoading ? (
+            <div className="px-4">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <Skeleton key={i} className="h-[60px] rounded-xl mb-1" />
+              ))}
+            </div>
+          ) : !debouncedQuery && !selectedCountry ? (
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="px-5 mb-2 flex items-center gap-2 text-sm font-bold text-muted-foreground uppercase tracking-wider">
+                <Sparkles size={14} className="text-primary" />
+                Explore Categories
+              </div>
+              <CategoryDiscovery onSelect={handleCategorySelect} />
+              
+              <div className="px-5 mt-8 mb-2 flex items-center gap-2 text-sm font-bold text-muted-foreground uppercase tracking-wider">
+                <Globe size={14} className="text-primary" />
+                Popular Countries
+              </div>
+              <div className="grid grid-cols-2 gap-3 px-4">
+                {countries?.slice(0, 6).map(c => (
+                  <button
+                    key={c.iso_3166_1}
+                    onClick={() => setSelectedCountry(c.name)}
+                    className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border/50 hover:bg-muted transition-all text-left"
+                  >
+                    <img
+                      src={`https://flagcdn.com/24x18/${c.iso_3166_1.toLowerCase()}.png`}
+                      alt=""
+                      className="h-4 rounded-[2px]"
+                    />
+                    <span className="text-sm font-medium truncate">{c.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
           ) : results?.length === 0 ? (
             <div className="text-center py-20 text-muted-foreground">
               <p className="text-sm">No stations found</p>
             </div>
-          ) : results?.map(s => (
-            <StationCard key={s.stationuuid} station={s} />
-          ))}
+          ) : (
+            <div className="px-4">
+              {results?.map(s => (
+                <StationCard key={s.stationuuid} station={s} />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </>

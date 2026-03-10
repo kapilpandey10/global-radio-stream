@@ -1,7 +1,7 @@
 import { usePlayer } from "@/contexts/PlayerContext";
 import { StationLogo } from "./StationLogo";
 import { SEO } from "./SEO";
-import { Play, Pause, Loader2, ChevronDown, Heart, Share2, Radio, X } from "lucide-react";
+import { Play, Pause, Loader2, ChevronDown, Heart, Share2, Radio, X, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -10,6 +10,8 @@ import { AudioVisualizer } from "./AudioVisualizer";
 import { shareStation } from "@/utils/share";
 import { VolumeSlider } from "./VolumeSlider";
 import { BannerAd } from "./BannerAd";
+import { useRecommendations } from "@/hooks/useRecommendations";
+import { StationCard } from "./StationCard";
 
 const SkipIcon = ({ seconds, direction }: { seconds: number; direction: "back" | "forward" }) => (
   <div className="relative flex items-center justify-center w-8 h-8">
@@ -40,6 +42,7 @@ export const NowPlaying = () => {
   } = usePlayer();
   
   const [showStationInfo, setShowStationInfo] = useState(false);
+  const { recommendations, isLoading: loadingRecs } = useRecommendations(currentStation);
 
   if (!currentStation || !showNowPlaying) return null;
   const fav = isFavorite(currentStation.stationuuid);
@@ -293,6 +296,28 @@ export const NowPlaying = () => {
 
               {/* Volume — horizontal Apple-style */}
               <VolumeSlider value={volume} onChange={setVolume} />
+
+              {/* Related Stations */}
+              <div className="pt-8 w-full">
+                <div className="flex items-center gap-2 mb-4">
+                  <Sparkles size={16} className="text-primary" />
+                  <h3 className="text-sm font-bold text-foreground uppercase tracking-wider">You might also like</h3>
+                </div>
+                
+                <div className="space-y-1">
+                  {loadingRecs ? (
+                    Array.from({ length: 3 }).map((_, i) => (
+                      <Skeleton key={i} className="h-14 w-full rounded-xl" />
+                    ))
+                  ) : recommendations.length > 0 ? (
+                    recommendations.slice(0, 5).map(station => (
+                      <StationCard key={station.stationuuid} station={station} compact />
+                    ))
+                  ) : (
+                    <p className="text-xs text-muted-foreground text-center py-4">No recommendations found</p>
+                  )}
+                </div>
+              </div>
 
               {/* Banner Ad */}
               <BannerAd className="mt-4 rounded-2xl overflow-hidden" />

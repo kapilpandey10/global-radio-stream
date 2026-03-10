@@ -1,4 +1,4 @@
-import { useTopStations, useTrendingStations, useLocalStations, useUserCountry } from "@/hooks/useRadioAPI";
+import { useTopStations, useTrendingStations, useLocalStations, useUserCountry, useCountries } from "@/hooks/useRadioAPI";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { StationCard } from "@/components/StationCard";
 import { StationLogo } from "@/components/StationLogo";
@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SEO } from "@/components/SEO";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { MapPin, TrendingUp, Star, ChevronRight, Clock, Radio, Play, Pause, Loader2 } from "lucide-react";
+import { MapPin, TrendingUp, Star, ChevronRight, Clock, Radio, Play, Pause, Loader2, Sparkles, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BannerAd } from "@/components/BannerAd";
 
@@ -109,6 +109,7 @@ const Index = () => {
   const { data: localStations, isLoading: loadingLocal } = useLocalStations(userCountry || null);
   const { data: topStations, isLoading: loadingTop } = useTopStations(10);
   const { data: trending, isLoading: loadingTrending } = useTrendingStations(10);
+  const { data: countries } = useCountries();
   const { recentlyPlayed, play } = usePlayer();
   const navigate = useNavigate();
 
@@ -117,7 +118,7 @@ const Index = () => {
   return (
     <>
       <SEO path="/" />
-      <div className="max-w-2xl mx-auto pb-6">
+      <div className="max-w-2xl mx-auto pb-24">
         {/* Hero */}
         <div className="px-5 pt-14 pb-2">
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
@@ -149,6 +150,36 @@ const Index = () => {
           <BannerAd className="rounded-2xl overflow-hidden" />
         </section>
 
+        {/* Discover Section */}
+        <section className="mt-6 px-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold flex items-center gap-2">
+              <Sparkles size={20} className="text-primary" />
+              Discover
+            </h2>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={() => navigate('/search?q=Jazz')}
+              className="h-24 rounded-2xl bg-gradient-to-br from-orange-500 to-red-600 p-4 text-left relative overflow-hidden group active:scale-95 transition-all"
+            >
+              <span className="text-white font-bold relative z-10">Jazz & Blues</span>
+              <div className="absolute -right-2 -bottom-2 opacity-20 group-hover:scale-110 transition-transform">
+                <Music size={60} className="text-white" />
+              </div>
+            </button>
+            <button
+              onClick={() => navigate('/search?q=Rock')}
+              className="h-24 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 p-4 text-left relative overflow-hidden group active:scale-95 transition-all"
+            >
+              <span className="text-white font-bold relative z-10">Rock Anthems</span>
+              <div className="absolute -right-2 -bottom-2 opacity-20 group-hover:scale-110 transition-transform">
+                <Zap size={60} className="text-white" />
+              </div>
+            </button>
+          </div>
+        </section>
+
         {/* Recently Played */}
         {recentlyPlayed.length > 0 && (
           <section className="mt-5 px-5">
@@ -175,6 +206,28 @@ const Index = () => {
           </section>
         )}
 
+        {/* Popular Countries */}
+        <section className="mt-6 px-5">
+          <WidgetCard title="Global Stations" icon={Globe} onSeeAll={() => navigate('/countries')}>
+            <div className="grid grid-cols-2 gap-2 mt-2">
+              {countries?.slice(0, 4).map(c => (
+                <button
+                  key={c.iso_3166_1}
+                  onClick={() => navigate(`/countries/${c.name}`)}
+                  className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 hover:bg-muted transition-all text-left"
+                >
+                  <img
+                    src={`https://flagcdn.com/24x18/${c.iso_3166_1.toLowerCase()}.png`}
+                    alt=""
+                    className="h-3.5 rounded-[1px]"
+                  />
+                  <span className="text-xs font-semibold truncate">{c.name}</span>
+                </button>
+              ))}
+            </div>
+          </WidgetCard>
+        </section>
+
         {/* Local Stations Widget */}
         {userCountry && (
           <section className="mt-4 px-5">
@@ -191,6 +244,17 @@ const Index = () => {
             </WidgetCard>
           </section>
         )}
+
+        {/* Trending Widget */}
+        <section className="mt-4 px-5">
+          <WidgetCard title="Trending Globally" icon={TrendingUp}>
+            {loadingTrending ? (
+              <div className="space-y-1">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-[56px] rounded-2xl" />)}</div>
+            ) : (
+              trending?.slice(0, 5).map(s => <StationCard key={s.stationuuid} station={s} compact />)
+            )}
+          </WidgetCard>
+        </section>
 
       </div>
 

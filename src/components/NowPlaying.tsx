@@ -78,9 +78,9 @@ export const NowPlaying = () => {
           <div className="flex items-center gap-1.5">
             {streamStatus === "error" || streamStatus === "stalled" ? (
               <>
-                <span className="w-2 h-2 rounded-full bg-destructive" />
-                <span className="text-xs font-semibold uppercase tracking-widest text-destructive">
-                  {streamStatus === "stalled" ? "No Signal" : "Error"}
+                <span className="w-2 h-2 rounded-full bg-amber-500" />
+                <span className="text-xs font-semibold uppercase tracking-widest text-amber-500">
+                  Offline
                 </span>
               </>
             ) : isLoading || streamStatus === "connecting" || streamStatus === "buffering" ? (

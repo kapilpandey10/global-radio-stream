@@ -21,8 +21,9 @@ const Search = () => {
 
   // Banner Initialization
   useEffect(() => {
-    if (window.aclib && typeof window.aclib.runBanner === 'function') {
-      window.aclib.runBanner({
+    const w = window as any;
+    if (w.aclib && typeof w.aclib.runBanner === 'function') {
+      w.aclib.runBanner({
         zoneId: '11051154',
       });
     }

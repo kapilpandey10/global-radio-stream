@@ -24,6 +24,8 @@ const DEFAULT_SETTINGS: Settings = {
   skipForward: 30,
 };
 
+type StreamStatus = "idle" | "connecting" | "buffering" | "playing" | "stalled" | "error";
+
 interface PlayerState {
   currentStation: RadioStation | null;
   isPlaying: boolean;
@@ -31,6 +33,7 @@ interface PlayerState {
   isLoading: boolean;
   showNowPlaying: boolean;
   nowPlayingInfo: string | null;
+  streamStatus: StreamStatus;
 }
 
 interface PlayerContextType extends PlayerState {
@@ -64,6 +67,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const fallbackAudioRef = useRef<HTMLAudioElement | null>(null);
   const sleepTimerRef = useRef<NodeJS.Timeout | null>(null);
   const usingFallbackRef = useRef(false);
+  const stallTimerRef = useRef<NodeJS.Timeout | null>(null);
   
   // Web Audio API for visualizer
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -77,6 +81,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     isLoading: false,
     showNowPlaying: false,
     nowPlayingInfo: null,
+    streamStatus: "idle",
   });
 
   const [favorites, setFavorites] = useState<RadioStation[]>(() => {
@@ -115,13 +120,55 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     if (settings.sleepTimer > 0 && state.isPlaying) {
       sleepTimerRef.current = setTimeout(() => {
         stopCurrentPlayer();
-        setState(s => ({ ...s, isPlaying: false }));
+        setState(s => ({ ...s, isPlaying: false, streamStatus: "idle" }));
       }, settings.sleepTimer * 60 * 1000);
     }
     return () => { if (sleepTimerRef.current) clearTimeout(sleepTimerRef.current); };
   }, [settings.sleepTimer, state.isPlaying]);
 
+  const clearStallTimer = useCallback(() => {
+    if (stallTimerRef.current) {
+      clearTimeout(stallTimerRef.current);
+      stallTimerRef.current = null;
+    }
+  }, []);
+
+  const startStallDetection = useCallback((audio: HTMLAudioElement) => {
+    clearStallTimer();
+    
+    // Monitor for stalled/no-audio state
+    const checkStall = () => {
+      if (!audio || audio.paused) return;
+      
+      // Check if audio is actually producing output
+      if (audio.readyState < 2 || audio.networkState === 3) {
+        setState(s => ({ ...s, streamStatus: "stalled", isLoading: false }));
+      }
+    };
+    
+    // Check every 8 seconds for stalled streams
+    stallTimerRef.current = setInterval(checkStall, 8000) as any;
+    
+    audio.addEventListener('stalled', () => {
+      setState(s => ({ ...s, streamStatus: "buffering" }));
+    });
+    
+    audio.addEventListener('waiting', () => {
+      setState(s => ({ ...s, streamStatus: "buffering", isLoading: true }));
+    });
+    
+    audio.addEventListener('playing', () => {
+      setState(s => ({ ...s, streamStatus: "playing", isPlaying: true, isLoading: false }));
+    });
+    
+    audio.addEventListener('error', () => {
+      setState(s => ({ ...s, streamStatus: "error", isPlaying: false, isLoading: false }));
+      clearStallTimer();
+    });
+  }, [clearStallTimer]);
+
   const stopCurrentPlayer = useCallback(() => {
+    clearStallTimer();
     if (icecastPlayerRef.current) {
       try { icecastPlayerRef.current.stop(); } catch {}
       icecastPlayerRef.current = null;
@@ -131,7 +178,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       fallbackAudioRef.current.src = "";
     }
     usingFallbackRef.current = false;
-  }, []);
+  }, [clearStallTimer]);
 
   // Setup Web Audio API for visualizer
   const setupAudioContext = useCallback((audioElement: HTMLAudioElement) => {
@@ -146,19 +193,17 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         analyserNodeRef.current.smoothingTimeConstant = 0.8;
       }
 
-      // Only create source node once per audio element
       if (!sourceNodeRef.current) {
         try {
           sourceNodeRef.current = audioContextRef.current.createMediaElementSource(audioElement);
           sourceNodeRef.current.connect(analyserNodeRef.current);
           analyserNodeRef.current.connect(audioContextRef.current.destination);
         } catch (err) {
-          // Source already connected or CORS issue - gracefully ignore
           console.warn('Audio context setup warning:', err);
         }
       }
     } catch (err) {
-      console.warn('Failed to setup audio context (may be CORS restricted):', err);
+      console.warn('Failed to setup audio context:', err);
     }
   }, []);
 
@@ -175,29 +220,36 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const audio = fallbackAudioRef.current;
     audio.src = station.url_resolved || station.url;
     audio.volume = vol;
-    audio.crossOrigin = "anonymous"; // Enable CORS for visualizer
+    audio.crossOrigin = "anonymous";
+    audio.preload = "auto";
     
-    // Setup audio context for visualizer
     setupAudioContext(audio);
+    startStallDetection(audio);
+    
+    setState(s => ({ ...s, streamStatus: "connecting" }));
     
     audio.play().then(() => {
-      setState(s => ({ ...s, isPlaying: true, isLoading: false }));
+      setState(s => ({ ...s, isPlaying: true, isLoading: false, streamStatus: "playing" }));
     }).catch(() => {
-      setState(s => ({ ...s, isLoading: false, isPlaying: false }));
+      setState(s => ({ ...s, isLoading: false, isPlaying: false, streamStatus: "error" }));
     });
-    audio.onplaying = () => setState(s => ({ ...s, isPlaying: true, isLoading: false }));
-    audio.onwaiting = () => setState(s => ({ ...s, isLoading: true }));
-    audio.onerror = () => setState(s => ({ ...s, isPlaying: false, isLoading: false }));
-  }, [setupAudioContext]);
+    
+    audio.onplaying = () => setState(s => ({ ...s, isPlaying: true, isLoading: false, streamStatus: "playing" }));
+    audio.onwaiting = () => setState(s => ({ ...s, isLoading: true, streamStatus: "buffering" }));
+    audio.onerror = () => {
+      clearStallTimer();
+      setState(s => ({ ...s, isPlaying: false, isLoading: false, streamStatus: "error" }));
+    };
+  }, [setupAudioContext, startStallDetection, clearStallTimer]);
 
   const retryCountRef = useRef(0);
-  const MAX_RETRIES = 3;
+  const MAX_RETRIES = 2; // Reduced from 3 for faster fallback
 
   const play = useCallback((station: RadioStation) => {
     stopCurrentPlayer();
     retryCountRef.current = 0;
     const streamUrl = station.url_resolved || station.url;
-    setState(s => ({ ...s, currentStation: station, isLoading: true, isPlaying: false, nowPlayingInfo: null }));
+    setState(s => ({ ...s, currentStation: station, isLoading: true, isPlaying: false, nowPlayingInfo: null, streamStatus: "connecting" }));
     addToRecent(station);
 
     try {
@@ -212,10 +264,10 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         },
         onPlay: () => {
           retryCountRef.current = 0;
-          setState(s => ({ ...s, isPlaying: true, isLoading: false }));
+          setState(s => ({ ...s, isPlaying: true, isLoading: false, streamStatus: "playing" }));
         },
         onLoad: () => {
-          setState(s => ({ ...s, isLoading: true }));
+          setState(s => ({ ...s, isLoading: true, streamStatus: "buffering" }));
         },
         onStop: () => {
           setState(s => ({ ...s, isPlaying: false }));
@@ -235,11 +287,11 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             playWithFallback(station, state.volume);
             return;
           }
-          setState(s => ({ ...s, isLoading: true }));
+          setState(s => ({ ...s, isLoading: true, streamStatus: "buffering" }));
         },
         metadataTypes: ["icy"],
-        retryTimeout: 2000,
-        retryDelayRate: 1.5,
+        retryTimeout: 1500,  // Faster retry (was 2000)
+        retryDelayRate: 1.2,  // Less aggressive backoff (was 1.5)
       } as any);
 
       icecastPlayerRef.current = player;
@@ -249,10 +301,11 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           player.audioElement.volume = state.volume;
           player.audioElement.crossOrigin = "anonymous";
           setupAudioContext(player.audioElement);
+          startStallDetection(player.audioElement);
         }
       };
       
-      // Timeout to prevent infinite loading
+      // Faster timeout for fallback (8s instead of 15s)
       const playTimeout = setTimeout(() => {
         if (icecastPlayerRef.current === player) {
           console.warn("Play timeout, falling back");
@@ -260,7 +313,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           icecastPlayerRef.current = null;
           playWithFallback(station, state.volume);
         }
-      }, 15000);
+      }, 8000);
 
       player.play().then(() => {
         clearTimeout(playTimeout);
@@ -274,23 +327,23 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       console.warn("IcecastMetadataPlayer init failed, using fallback:", e);
       playWithFallback(station, state.volume);
     }
-  }, [state.volume, addToRecent, stopCurrentPlayer, playWithFallback, setupAudioContext]);
+  }, [state.volume, addToRecent, stopCurrentPlayer, playWithFallback, setupAudioContext, startStallDetection]);
 
   const pause = useCallback(() => {
+    clearStallTimer();
     if (usingFallbackRef.current) {
       fallbackAudioRef.current?.pause();
     } else if (icecastPlayerRef.current) {
       try { icecastPlayerRef.current.stop(); } catch {}
     }
-    setState(s => ({ ...s, isPlaying: false }));
-  }, []);
+    setState(s => ({ ...s, isPlaying: false, streamStatus: "idle" }));
+  }, [clearStallTimer]);
 
   const resume = useCallback(() => {
     if (usingFallbackRef.current) {
       fallbackAudioRef.current?.play();
-      setState(s => ({ ...s, isPlaying: true }));
+      setState(s => ({ ...s, isPlaying: true, streamStatus: "playing" }));
     } else {
-      // For icecast player, we need to re-play since stop() kills the connection
       const station = state.currentStation;
       if (station) {
         play(station);
@@ -311,7 +364,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const stop = useCallback(() => {
     stopCurrentPlayer();
-    setState(s => ({ ...s, currentStation: null, isPlaying: false, isLoading: false, showNowPlaying: false, nowPlayingInfo: null }));
+    setState(s => ({ ...s, currentStation: null, isPlaying: false, isLoading: false, showNowPlaying: false, nowPlayingInfo: null, streamStatus: "idle" }));
   }, [stopCurrentPlayer]);
 
   const seekAudio = useCallback((seconds: number) => {
@@ -343,7 +396,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setSettings(prev => ({ ...prev, ...partial }));
   }, []);
 
-  // Media Session API for background play and lock screen controls
+  // Media Session API
   useEffect(() => {
     if ('mediaSession' in navigator && state.currentStation) {
       navigator.mediaSession.metadata = new MediaMetadata({
@@ -362,7 +415,6 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       navigator.mediaSession.playbackState = state.isPlaying ? 'playing' : 'paused';
 
-      // Action handlers
       navigator.mediaSession.setActionHandler('play', () => { resume(); });
       navigator.mediaSession.setActionHandler('pause', () => { pause(); });
       navigator.mediaSession.setActionHandler('stop', () => { stop(); });

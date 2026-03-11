@@ -12,6 +12,7 @@ import { VolumeSlider } from "./VolumeSlider";
 import { BannerAd } from "./BannerAd";
 import { useRecommendations } from "@/hooks/useRecommendations";
 import { StationCard } from "./StationCard";
+import { Skeleton } from "./ui/skeleton";
 
 const SkipIcon = ({ seconds, direction }: { seconds: number; direction: "back" | "forward" }) => (
   <div className="relative flex items-center justify-center w-8 h-8">
@@ -38,7 +39,7 @@ export const NowPlaying = () => {
   const {
     currentStation, isPlaying, isLoading, pause, resume, stop, volume, setVolume,
     showNowPlaying, toggleNowPlaying, toggleFavorite, isFavorite, recentlyPlayed, play, settings, nowPlayingInfo,
-    skipBack, skipForward, analyserNode,
+    skipBack, skipForward, analyserNode, streamStatus,
   } = usePlayer();
   
   const [showStationInfo, setShowStationInfo] = useState(false);
@@ -74,11 +75,18 @@ export const NowPlaying = () => {
             <ChevronDown size={26} className="text-muted-foreground" />
           </button>
           <div className="flex items-center gap-1.5">
-            {isLoading ? (
+            {streamStatus === "error" || streamStatus === "stalled" ? (
+              <>
+                <span className="w-2 h-2 rounded-full bg-destructive" />
+                <span className="text-xs font-semibold uppercase tracking-widest text-destructive">
+                  {streamStatus === "stalled" ? "No Signal" : "Error"}
+                </span>
+              </>
+            ) : isLoading || streamStatus === "connecting" || streamStatus === "buffering" ? (
               <>
                 <Loader2 size={10} className="animate-spin text-primary" />
                 <span className="text-xs font-semibold uppercase tracking-widest text-primary">
-                  Buffering
+                  {streamStatus === "connecting" ? "Connecting" : "Buffering"}
                 </span>
               </>
             ) : isPlaying ? (
@@ -240,8 +248,8 @@ export const NowPlaying = () => {
                   )}
                 </div>
                 <div className="flex justify-between mt-1 text-[10px] text-muted-foreground/60 font-medium">
-                  <span>{isLoading ? "CONNECTING" : isPlaying ? "LIVE" : "STOPPED"}</span>
-                  <span>{isLoading ? "Buffering..." : isPlaying ? "Streaming" : "Paused"}</span>
+                  <span>{streamStatus === "error" ? "ERROR" : streamStatus === "stalled" ? "NO SIGNAL" : isLoading ? "CONNECTING" : isPlaying ? "LIVE" : "STOPPED"}</span>
+                  <span>{streamStatus === "error" ? "Stream unavailable" : streamStatus === "stalled" ? "No audio detected" : isLoading ? "Buffering..." : isPlaying ? "Streaming" : "Paused"}</span>
                 </div>
               </div>
 

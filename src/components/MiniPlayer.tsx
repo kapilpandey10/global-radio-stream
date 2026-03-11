@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 export const MiniPlayer = () => {
-  const { currentStation, isPlaying, isLoading, pause, resume, toggleNowPlaying, nowPlayingInfo } = usePlayer();
+  const { currentStation, isPlaying, isLoading, pause, resume, toggleNowPlaying, nowPlayingInfo, streamStatus } = usePlayer();
 
   if (!currentStation) return null;
 

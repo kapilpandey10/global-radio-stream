@@ -39,7 +39,7 @@ export const NowPlaying = () => {
   const {
     currentStation, isPlaying, isLoading, pause, resume, stop, volume, setVolume,
     showNowPlaying, toggleNowPlaying, toggleFavorite, isFavorite, recentlyPlayed, play, settings, nowPlayingInfo,
-    skipBack, skipForward, analyserNode,
+    skipBack, skipForward, analyserNode, streamStatus,
   } = usePlayer();
   
   const [showStationInfo, setShowStationInfo] = useState(false);

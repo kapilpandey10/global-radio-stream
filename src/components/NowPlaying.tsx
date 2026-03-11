@@ -222,37 +222,43 @@ export const NowPlaying = () => {
 
             {/* Bottom section: Controls */}
             <div className="w-full max-w-sm space-y-6 pb-10 pt-4">
-              {/* Audio Visualizer */}
-              <AudioVisualizer 
-                analyser={analyserNode} 
-                isPlaying={isPlaying}
-                className="w-full h-16"
-              />
+              {/* Audio Visualizer or Offline state */}
+              {streamStatus === "error" || streamStatus === "stalled" ? (
+                <SadFaceAnimation />
+              ) : (
+                <>
+                  <AudioVisualizer 
+                    analyser={analyserNode} 
+                    isPlaying={isPlaying}
+                    className="w-full h-16"
+                  />
 
-              {/* Progress indicator */}
-              <div className="w-full">
-                <div className="h-1 bg-muted rounded-full overflow-hidden">
-                  {isLoading ? (
-                    <motion.div
-                      animate={{ x: ["-100%", "100%"] }}
-                      transition={{ repeat: Infinity, duration: 1.2, ease: "easeInOut" }}
-                      className="h-full w-2/3 bg-gradient-to-r from-transparent via-primary to-transparent"
-                    />
-                  ) : isPlaying ? (
-                    <motion.div
-                      animate={{ x: ["-100%", "100%"] }}
-                      transition={{ repeat: Infinity, duration: 3, ease: "linear" }}
-                      className="h-full w-1/3 bg-gradient-to-r from-transparent via-primary/60 to-transparent"
-                    />
-                  ) : (
-                    <div className="h-full w-0" />
-                  )}
-                </div>
-                <div className="flex justify-between mt-1 text-[10px] text-muted-foreground/60 font-medium">
-                  <span>{streamStatus === "error" ? "ERROR" : streamStatus === "stalled" ? "NO SIGNAL" : isLoading ? "CONNECTING" : isPlaying ? "LIVE" : "STOPPED"}</span>
-                  <span>{streamStatus === "error" ? "Stream unavailable" : streamStatus === "stalled" ? "No audio detected" : isLoading ? "Buffering..." : isPlaying ? "Streaming" : "Paused"}</span>
-                </div>
-              </div>
+                  {/* Progress indicator */}
+                  <div className="w-full">
+                    <div className="h-1 bg-muted rounded-full overflow-hidden">
+                      {isLoading ? (
+                        <motion.div
+                          animate={{ x: ["-100%", "100%"] }}
+                          transition={{ repeat: Infinity, duration: 1.2, ease: "easeInOut" }}
+                          className="h-full w-2/3 bg-gradient-to-r from-transparent via-primary to-transparent"
+                        />
+                      ) : isPlaying ? (
+                        <motion.div
+                          animate={{ x: ["-100%", "100%"] }}
+                          transition={{ repeat: Infinity, duration: 3, ease: "linear" }}
+                          className="h-full w-1/3 bg-gradient-to-r from-transparent via-primary/60 to-transparent"
+                        />
+                      ) : (
+                        <div className="h-full w-0" />
+                      )}
+                    </div>
+                    <div className="flex justify-between mt-1 text-[10px] text-muted-foreground/60 font-medium">
+                      <span>{isLoading ? "CONNECTING" : isPlaying ? "LIVE" : "STOPPED"}</span>
+                      <span>{isLoading ? "Buffering..." : isPlaying ? "Streaming" : "Paused"}</span>
+                    </div>
+                  </div>
+                </>
+              )}
 
               {/* Transport controls */}
               <div className="flex items-center justify-center gap-6">

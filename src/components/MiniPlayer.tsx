@@ -41,13 +41,13 @@ export const MiniPlayer = () => {
               <p className="text-xs truncate flex items-center gap-1">
                 <span className={cn(
                   "w-1.5 h-1.5 rounded-full inline-block",
-                  streamStatus === "error" || streamStatus === "stalled" ? "bg-destructive" :
+                  streamStatus === "error" || streamStatus === "stalled" ? "bg-amber-500" :
                   isPlaying ? "bg-primary" : "bg-muted-foreground"
                 )} />
                 <span className={cn(
-                  streamStatus === "error" || streamStatus === "stalled" ? "text-destructive" : "text-muted-foreground"
+                  streamStatus === "error" || streamStatus === "stalled" ? "text-amber-500" : "text-muted-foreground"
                 )}>
-                  {streamStatus === "stalled" ? "No signal" : streamStatus === "error" ? "Error" : isPlaying ? "Live" : "Paused"}
+                  {streamStatus === "stalled" || streamStatus === "error" ? "Offline" : isPlaying ? "Live" : "Paused"}
                 </span>
                 <span className="mx-0.5 text-muted-foreground">·</span>
                 <span className="text-muted-foreground">{currentStation.country}</span>

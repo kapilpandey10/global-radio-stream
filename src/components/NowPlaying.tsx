@@ -75,11 +75,18 @@ export const NowPlaying = () => {
             <ChevronDown size={26} className="text-muted-foreground" />
           </button>
           <div className="flex items-center gap-1.5">
-            {isLoading ? (
+            {streamStatus === "error" || streamStatus === "stalled" ? (
+              <>
+                <span className="w-2 h-2 rounded-full bg-destructive" />
+                <span className="text-xs font-semibold uppercase tracking-widest text-destructive">
+                  {streamStatus === "stalled" ? "No Signal" : "Error"}
+                </span>
+              </>
+            ) : isLoading || streamStatus === "connecting" || streamStatus === "buffering" ? (
               <>
                 <Loader2 size={10} className="animate-spin text-primary" />
                 <span className="text-xs font-semibold uppercase tracking-widest text-primary">
-                  Buffering
+                  {streamStatus === "connecting" ? "Connecting" : "Buffering"}
                 </span>
               </>
             ) : isPlaying ? (

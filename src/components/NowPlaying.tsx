@@ -248,8 +248,8 @@ export const NowPlaying = () => {
                   )}
                 </div>
                 <div className="flex justify-between mt-1 text-[10px] text-muted-foreground/60 font-medium">
-                  <span>{isLoading ? "CONNECTING" : isPlaying ? "LIVE" : "STOPPED"}</span>
-                  <span>{isLoading ? "Buffering..." : isPlaying ? "Streaming" : "Paused"}</span>
+                  <span>{streamStatus === "error" ? "ERROR" : streamStatus === "stalled" ? "NO SIGNAL" : isLoading ? "CONNECTING" : isPlaying ? "LIVE" : "STOPPED"}</span>
+                  <span>{streamStatus === "error" ? "Stream unavailable" : streamStatus === "stalled" ? "No audio detected" : isLoading ? "Buffering..." : isPlaying ? "Streaming" : "Paused"}</span>
                 </div>
               </div>
 

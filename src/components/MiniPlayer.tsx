@@ -38,14 +38,19 @@ export const MiniPlayer = () => {
                 {nowPlayingInfo}
               </p>
             ) : (
-              <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
+              <p className="text-xs truncate flex items-center gap-1">
                 <span className={cn(
                   "w-1.5 h-1.5 rounded-full inline-block",
+                  streamStatus === "error" || streamStatus === "stalled" ? "bg-destructive" :
                   isPlaying ? "bg-primary" : "bg-muted-foreground"
                 )} />
-                <span>{isPlaying ? "Live" : "Paused"}</span>
-                <span className="mx-0.5">·</span>
-                {currentStation.country}
+                <span className={cn(
+                  streamStatus === "error" || streamStatus === "stalled" ? "text-destructive" : "text-muted-foreground"
+                )}>
+                  {streamStatus === "stalled" ? "No signal" : streamStatus === "error" ? "Error" : isPlaying ? "Live" : "Paused"}
+                </span>
+                <span className="mx-0.5 text-muted-foreground">·</span>
+                <span className="text-muted-foreground">{currentStation.country}</span>
               </p>
             )}
           </div>

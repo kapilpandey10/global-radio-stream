@@ -13,6 +13,7 @@ import { BannerAd } from "./BannerAd";
 import { useRecommendations } from "@/hooks/useRecommendations";
 import { StationCard } from "./StationCard";
 import { Skeleton } from "./ui/skeleton";
+import { SadFaceAnimation } from "./SadFaceAnimation";
 
 const SkipIcon = ({ seconds, direction }: { seconds: number; direction: "back" | "forward" }) => (
   <div className="relative flex items-center justify-center w-8 h-8">
